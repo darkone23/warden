@@ -2,6 +2,7 @@
 /lib
 /classes
 /checkouts
+warden.yaml
 pom.xml
 pom.xml.asc
 *.jar
