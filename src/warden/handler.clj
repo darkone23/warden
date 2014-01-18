@@ -1,10 +1,11 @@
 (ns warden.handler
   (:use compojure.core)
-  (:require [compojure.handler :as handler]
+  (:require [warden.config :refer (config)]
+            [compojure.handler :as handler]
             [compojure.route :as route]))
 
 (defroutes app-routes
-  (GET "/" [] (System/getProperty "config"))
+  (GET "/" [] "Hello World")
   (route/resources "/")
   (route/not-found "404 Not Found"))
 
