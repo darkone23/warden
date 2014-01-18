@@ -1,0 +1,6 @@
+# Warden configuration file
+# simply list any number of name/port pairs
+
+hosts:
+  - name: web
+    port: localhost:9001

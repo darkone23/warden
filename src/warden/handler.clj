@@ -4,9 +4,9 @@
             [compojure.route :as route]))
 
 (defroutes app-routes
-  (GET "/" [] "Hello World")
+  (GET "/" [] (System/getProperty "config"))
   (route/resources "/")
-  (route/not-found "Not Found"))
+  (route/not-found "404 Not Found"))
 
 (def app
   (handler/site app-routes))
