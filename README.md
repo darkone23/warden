@@ -6,7 +6,7 @@ Currently a work in progress.
 
 ## Running
 
-To start warden create your own `warden.yaml` and:
+To start warden create your own [warden.yaml](https://github.com/eggsby/warden/blob/master/example.warden.yaml) and:
 
     lein ring server
 

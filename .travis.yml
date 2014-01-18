@@ -4,4 +4,4 @@ jdk:
   - openjdk6
   - openjdk7
   - oraclejdk7
-script: lein2 test
+script: lein2 midje
