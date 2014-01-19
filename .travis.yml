@@ -4,4 +4,4 @@ jdk:
   - openjdk6
   - openjdk7
   - oraclejdk7
-script: lein2 midje
+script: lein2 do cljsbuild once, midje

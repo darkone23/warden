@@ -2,6 +2,7 @@
 /lib
 /classes
 /checkouts
+/resources/public/js
 warden.yaml
 pom.xml
 pom.xml.asc
