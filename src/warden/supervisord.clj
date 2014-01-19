@@ -10,28 +10,12 @@
   "Generates an api client out of a config entry"
   (partial xml-rpc/call (get-url supervisor)))
 
-(defn- call* [call]
-  "Creates a call spec for supervisord"
-  (if-not (sequential? call)
-    {:methodName (name call)}
-    (let [[method & args] call
-           method-name (name method)]
-      (if args
-        {:methodName method-name :params args}
-        {:methodName method-name}))))
-
-(defn multi-call [client & calls]
-  "Bundle api calls into a single request"
-  (client :system.multicall (map call* calls)))
-
 (defn get-supervisord-info [client]
   "Fetches invormation about the supervisord server"
-  (let [names   [:version :id :state :pid]
-        methods [:supervisor.getSupervisorVersion
-                 :supervisor.getIdentification
-                 :supervisor.getState
-                 :supervisor.getPID]]
-    (zipmap names (apply multi-call client methods))))
+  {:version (client :supervisor.getSupervisorVersion)
+   :id      (client :supervisor.getIdentification)
+   :state   (client :supervisor.getState)
+   :pid     (client :supervisor.getPID)})
 
 (defn get-process-info [client name]
    "Returns a map of information about a process"
