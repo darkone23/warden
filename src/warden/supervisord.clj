@@ -1,5 +1,6 @@
 (ns warden.supervisord
-  (:require [necessary-evil.core :as xml-rpc]))
+  (:require [necessary-evil.core :as xml-rpc]
+            [clojure.core.async :refer (chan timeout close! alts! go-loop >!)]))
 
 (defn xml-url [port] (str "http://" port "/RPC2"))
 
@@ -84,22 +85,64 @@
   "Reads some number of bytes from stdout of a process
    Starts at offset, or end of file if offset+bytes doesn't reach EOF
    returns [content new-offset overflow?]"
-  (client :supervisor.readProcessStdoutLog name offset bytes))
+  (client :supervisor.tailProcessStdoutLog name offset bytes))
 
 (defn tail-process-stderr [client name offset bytes]
   "Reads some number of bytes from stderr of a process
    Starts at offset, or end of file if offset+bytes doesn't reach EOF
    returns [content new-offset overflow?]"
-  (client :supervisor.readProcessStdoutLog name offset bytes))
+  (client :supervisor.tailProcessStderrLog name offset bytes))
+
+(defn- tail-channel* [tail-fn client name]
+  "Creates a channel which will emit lines from the remote clients process
+   Returns [log-chan control-chan].
+   Close control-chan to stop the stream"
+  (let [log-chan (chan 100) control-chan (chan 1)
+        wait 1000 chunk-size 5000]
+    (go-loop [[content offset _] (tail-fn client name 0 chunk-size)]
+      (if (empty? content)
+        ;; no lines for reading, start over
+        (let [[msg ch] (alts! [control-chan (timeout wait)])]
+          (if (= control-chan ch)
+            (map close! [log-chan control-chan])
+            (recur (tail-fn client name offset chunk-size))))
+        ;; process lines, adjust offset, start over
+        (let [num-lines (count (re-seq #"\n" content))
+              lines     (take num-lines (re-seq #"[^\n]+" content))
+              read-size (reduce + num-lines (map count lines))
+              offset    (- offset (- (count content) read-size))]
+          (doseq [line lines] (>! log-chan line))
+          (let [[msg ch] (alts! [control-chan (timeout wait)])]
+            (if (= control-chan ch)
+              (map close! [log-chan control-chan])
+              (recur (tail-fn client name offset chunk-size)))))))
+    [log-chan control-chan]))
+
+(defn process-stdout-chan [client name]
+  "Creates a channel which will produce lines from the remote process stdout
+   Returns [log-chan control-chan].
+   Close control-chan to stop the stream"
+  (tail-channel* tail-process-stdout client name))
+
+(defn process-stderr-chan [client name]
+  "Creates a channel which will produce lines from the remote process stderr
+   Returns [log-chan control-chan].
+   Close control-chan to stop the stream"
+  (tail-channel* tail-process-stderr client name))
 
 (def api
-  {:info       get-supervisord-info
-   :status     get-process-info
-   :start      start
-   :stop       stop
-   :stop-all   stop-all
-   :start-all  start-all
-   :status-all get-all-process-info})
+  {:info        get-supervisord-info
+   :status      get-process-info
+   :start       start
+   :stop        stop
+   :stop-all    stop-all
+   :start-all   start-all
+   :status-all  get-all-process-info
+   :read-log    read-full-supervisord-log
+   :read-stdout read-full-process-stdout
+   :read-stderr read-full-process-stderr
+   :tail-stdout tail-process-stdout
+   :tail-stderr tail-process-stderr})
 
 (def methods*
   "Exhaustive list of supervisord API, for reference"
