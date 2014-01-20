@@ -1,9 +1,18 @@
 #!/bin/sh
 if [ -n ${TMUX} ]; then
 	tmux rename-window 'warden-dev'
-	tmux send-keys 'lein cljsbuild auto dev' 'C-m'
-	tmux split-window -v
 	tmux send-keys 'lein ring server-headless' 'C-m'
+	tmux split-window -h
+	tmux send-keys 'lein midje :autotest' 'C-m'
+	tmux split-window -v
+    if [ -x "`which karma`" ]; then
+	    tmux send-keys 'lein cljsbuild auto dev karma' 'C-m'
+	    tmux select-pane -L
+	    tmux split-window -v
+	    tmux send-keys 'karma test' 'C-m'
+    else
+	    tmux send-keys 'lein cljsbuild auto dev' 'C-m'
+    fi
 else
 	echo 'this script sets up a lein tmux workflow, start tmux to use it'
 fi
