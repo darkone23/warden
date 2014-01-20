@@ -8,7 +8,7 @@ Currently a work in progress.
 
 To build a standalone jar
 
-    lein with-profile release do cljsbuild once, aggravate, ring uberjar
+    lein with-profile release do cljsbuild once release, aggravate, ring uberjar
 
 ## Running
 

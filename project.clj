@@ -32,6 +32,7 @@
               :source-paths ["src/cljs"]
               :compiler {
                 :output-to "resources/release/public/js/core.js"
+                :output-dir "target/cljs-build"
                 :optimizations :advanced
                 :pretty-print false
                 :preamble ["react/react.min.js"]
