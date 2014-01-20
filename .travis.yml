@@ -4,4 +4,4 @@ jdk:
   - openjdk6
   - openjdk7
   - oraclejdk7
-script: lein2 do cljsbuild once, midje, ring uberjar
+script: lein2 do cljsbuild once dev, midje, ring uberjar

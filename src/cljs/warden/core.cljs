@@ -6,25 +6,23 @@
             [cljs.core.async :refer [<! timeout]])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
-(def app-state (atom {:route :home
-                      :name "warden"}))
+(def app-state (atom {:data "Loading..."
+                      :heartbeat {:enabled true
+                                  :wait 5000}}))
 
-(def wait 5000)
-
-(defn load! [url]
+(defn poll! [url]
   (go-loop [response (<! (http/get url))]
-    (let [route (:route @app-state)]
-      (swap! app-state assoc :name (:body response))
-      (<! (timeout wait))
-      (if (= :home route)
+    (swap! app-state assoc :data (:body response))
+    (let [{{:keys [wait enabled]} :heartbeat} @app-state]
+      (when enabled
+        (<! (timeout wait))
         (recur (<! (http/get url)))))))
 
 (defn app [state]
-  (let [{name :name} state
-        greeting (str "Hello " name)]
+  (let [{data :data} state]
     (om/component
-      (html [:h1 greeting]))))
+      (html [:h1 data]))))
 
-(defn start []
-  (load! "/api/supervisors")
+(defn ^:export start []
+  (poll! "/api/supervisors")
   (om/root app-state app js/document.body))
