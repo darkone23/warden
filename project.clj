@@ -22,19 +22,21 @@
               :source-paths ["src/cljs"]
               :test-paths ["test/cljs"]
               :compiler {
-                :output-to "resources/public/js/core.js"
-                :output-dir "resources/public/js/external"
+                :output-to "resources/dev/public/js/core.js"
+                :output-dir "resources/dev/public/js/external"
                 :optimizations :none
                 :source-map true}}
              {:id "release"
               :source-paths ["src/cljs"]
               :compiler {
-                :output-to "resources/public/js/core.js"
+                :output-to "resources/release/public/js/core.js"
                 :optimizations :advanced
                 :pretty-print false
                 :preamble ["react/react.min.js"]
                 :externs ["react/externs/react.js"]}}]}
   :profiles
-  {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]
+  {:release {:resource-paths ["resources/release"]}
+   :dev {:resource-paths ["resources/dev"]
+         :dependencies [[javax.servlet/servlet-api "2.5"]
                         [midje "1.6.0"]
                         [ring-mock "0.1.5"]]}})
