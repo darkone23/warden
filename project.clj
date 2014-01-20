@@ -7,6 +7,7 @@
                  [compojure "1.1.6"]
                  [clj-yaml "0.4.0"]
                  [necessary-evil "2.0.0"]
+                 [rm-hull/ring-gzip-middleware "0.1.7"]
                  [org.clojure/clojurescript "0.0-2138"]
                  [om "0.1.7"]
                  [sablono "0.2.1"]
