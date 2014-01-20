@@ -1,0 +1,9 @@
+#!/bin/sh
+if [ -n ${TMUX} ]; then
+	tmux rename-window 'warden-dev'
+	tmux send-keys 'lein cljsbuild auto dev' 'C-m'
+	tmux split-window -v
+	tmux send-keys 'lein ring server-headless' 'C-m'
+else
+	echo 'this script sets up a lein tmux workflow, start tmux to use it'
+fi

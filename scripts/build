@@ -1,0 +1,6 @@
+#!/bin/sh
+lein with-profile release \
+  do \
+    cljsbuild once release, \
+    aggravate, \
+    ring uberjar
