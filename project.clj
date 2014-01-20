@@ -12,6 +12,7 @@
                  [sablono "0.2.1"]
                  [cljs-http "0.1.2"]]
   :plugins [[lein-ring "0.8.10"]
+            [lein-aggravate "0.1.0-SNAPSHOT"]
             [lein-cljsbuild "1.0.1"]
             [lein-midje "3.1.3"]]
   :ring {:handler warden.handler/app}
@@ -35,7 +36,13 @@
                 :preamble ["react/react.min.js"]
                 :externs ["react/externs/react.js"]}}]}
   :profiles
-  {:release {:resource-paths ["resources/release"]}
+  {:release {:aggravate-files [{:input ["resources/dev/public/css/pure.css"
+                                        "resources/dev/public/css/font-awesome.css"
+                                        "resources/dev/public/css/fonts.css"
+                                        "resources/dev/public/css/warden.css"]
+                                :output "resources/release/public/css/warden.css"
+                                :compressor "yui"}]
+             :resource-paths ["resources/release"]}
    :dev {:resource-paths ["resources/dev"]
          :dependencies [[javax.servlet/servlet-api "2.5"]
                         [midje "1.6.0"]
