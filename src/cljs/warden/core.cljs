@@ -28,10 +28,11 @@
       (html [:div.main
              [:header [:h1 name]]
              [:div.supervisors
-                (for [supervisor supervisors]
+                (for [{:keys [pid state id name]} supervisors]
                   [:section.supervisor
-                    [:h2 (:name supervisor)]
-                    [:span.state (-> supervisor :state :statename)]])]]))))
+                    [:h2 name]
+                    [:h4 id "-" [:span.pid pid]]
+                    [:span.state (:statename state)]])]]))))
 
 (defn ^:export start []
   (poll-supervisors! "/api/supervisors")
