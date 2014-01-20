@@ -4,22 +4,30 @@
             [sablono.core :as html :refer [html] :include-macros true]
             [cljs-http.client :as http]
             [tailrecursion.cljson :refer [cljson->clj]]
-            [cljs.core.async :refer [<! timeout]])
+            [cljs.core.async :refer [chan >! <! timeout]])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
-(def app-state (atom {:supervisors []
-                      :name "Warden"
-                      :heartbeat {:enabled true
-                                  :wait 5000}}))
+(defn poll! [url wait ch]
+  "Poll a url every `wait` ms, delivering responses on ch"
+  ;; TODO: handle errors from http/get
+  (go-loop [enabled true response (<! (http/get url))]
+    (>! ch response)
+    (<! (timeout wait))
+    (recur enabled (<! (http/get url)))))
 
-(defn poll-supervisors! [url]
-  "Badly needs refactored for re-use, om component perhaps?"
-  (go-loop [response (<! (http/get url))]
-    (swap! app-state assoc :supervisors (-> response :body cljson->clj))
-    (let [{{:keys [wait enabled]} :heartbeat} @app-state]
-      (when enabled
-        (<! (timeout wait))
-        (recur (<! (http/get url)))))))
+(defn sync-state! [ch state cursor]
+  "Keep cursor synced with http responses from channel"
+  (go-loop [response (<! ch)]
+    (when response
+      (swap! state assoc-in cursor (-> response :body cljson->clj))
+      (recur (<! ch)))))
+
+(defn supervisor-node [{:keys [pid state id name]}]
+  "Supervisord dom section"
+  [:section.supervisor
+   [:h2 name]
+   [:h4 id "-" [:span.pid pid]]
+   [:span.state (:statename state)]])
 
 (defn app [state]
   "App as a function of application state"
@@ -27,13 +35,12 @@
     (om/component
       (html [:div.main
              [:header [:h1 name]]
-             [:div.supervisors
-                (for [{:keys [pid state id name]} supervisors]
-                  [:section.supervisor
-                    [:h2 name]
-                    [:h4 id "-" [:span.pid pid]]
-                    [:span.state (:statename state)]])]]))))
+             [:div.supervisors (map supervisor-node supervisors)]]))))
 
 (defn ^:export start []
-  (poll-supervisors! "/api/supervisors")
-  (om/root app-state app js/document.body))
+  (let [poll-ch (chan 1)
+        app-state (atom {:supervisors []
+                         :name "Warden"})]
+    (poll! "/api/supervisors" 5000 poll-ch)
+    (sync-state! poll-ch app-state [:supervisors])
+    (om/root app-state app js/document.body)))
