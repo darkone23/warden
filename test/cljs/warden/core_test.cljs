@@ -1,18 +1,22 @@
 (ns warden.core-test
-  (:use [warden.core :only [supervisor-node]]
-        [purnam.cljs :only [aget-in aset-in js-equals]])
-  (:use-macros [purnam.js :only [! ? f.n def.n obj arr]]
-               [purnam.test :only [init describe is it]]
-               [purnam.test.sweet :only [fact facts]]))
+  (:require [schema.core :as s]
+            [warden.schemas :refer (SupervisordInfo)]
+            [warden.core :refer [supervisor app]]
+            [purnam.cljs :refer [aget-in aset-in js-equals]])
+  (:require-macros [schema.macros :as s]
+                   [purnam.test :refer [init]]
+                   [purnam.test.sweet :refer [fact facts]]))
 
 (init) ;; start the test runner
 
-(def test-s {:pid :pid
+(def test-s {:pid 1234
              :processes []
-             :state {:statename :state}
-             :id :id
-             :name :name})
+             :state {:statename "RUNNING"
+                     :statecode 1}
+             :id "supervisord"
+             :version "9000"})
 
 (facts "Dom representations can be generated"
   (fact "supervisor nodes!"
-    (supervisor-node test-s) => vector?))
+    (s/validate SupervisordInfo test-s) => test-s
+    (supervisor test-s) => vector?))

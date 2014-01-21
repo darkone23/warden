@@ -22,13 +22,10 @@
       (swap! state assoc-in cursor (-> response :body cljson->clj))
       (recur (<! ch)))))
 
-(defn supervisor-node [{:keys [processes pid state id name]}]
-  "Supervisord dom section"
+(defn supervisor [{:keys [name processes pid state id version]}]
   [:section.supervisor
-   [:h2 name]
-   [:h4 id "-" [:span.pid pid]]
-   [:span.state (:statename state)
-                (str " - " (count processes) " processes")]])
+   [:h4 (str name " - " id " v" version " - " pid)]
+   [:span.state (str (:statename state) " - " (count processes) " processes")]])
 
 (defn app [state]
   "App as a function of application state"
@@ -36,7 +33,7 @@
     (om/component
       (html [:div.main
              [:header [:h1 name]]
-             [:div.supervisors (map supervisor-node supervisors)]]))))
+             [:div.supervisors (map supervisor supervisors)]]))))
 
 (defn ^:export start []
   (let [poll-ch (chan 1)

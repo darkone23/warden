@@ -10,7 +10,10 @@
 
 (defn client [supervisor]
   "Generates an api client out of a config entry"
-  (partial xml-rpc/call (get-url supervisor)))
+  (let [url (get-url supervisor)]
+    (fn [& args]
+      (try (apply xml-rpc/call url args)
+           (catch Exception e)))))
 
 (s/defn get-process-info :- (maybe-err SupervisorProcess)
   [client name]

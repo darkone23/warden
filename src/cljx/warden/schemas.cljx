@@ -1,6 +1,6 @@
 (ns warden.schemas
          (:require [schema.core :as s])
-  #+cljs (:require-macros [schema.core :as s]))
+  #+cljs (:require-macros [schema.macros :as s]))
 
 (def SupervisorProcess
   {:group          s/Str
