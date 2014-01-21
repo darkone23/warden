@@ -1,6 +1,52 @@
 (ns warden.supervisord
   (:require [necessary-evil.core :as xml-rpc]
+            [schema.core :as s]
             [clojure.core.async :refer (chan timeout close! alts! go-loop >!)]))
+
+(def SupervisorProcess
+  {:group          s/Str
+   :name           s/Str
+   :description    s/Str
+   :statename      s/Str
+   :spawnerr       s/Str
+   :logfile        s/Str
+   :stdout_logfile s/Str
+   :stderr_logfile s/Str
+   :pid            s/Num
+   :state          s/Num
+   :exitstatus     s/Num
+   :start          s/Num
+   :stop           s/Num
+   :now            s/Num})
+
+(def SupervisorProcessStatus
+  {:name        s/Str
+   :group       s/Str
+   :description s/Str
+   :status      s/Num})
+
+(def SupervisordState
+  {:statecode (s/enum 2
+                      1
+                      0
+                     -1)
+   :statename (s/enum "FATAL"
+                      "RUNNING"
+                      "RESTARTING"
+                      "SHUTDOWN")})
+
+(def Fault
+  {:fault-code   s/Num
+   :fault-string s/Str})
+
+(defn- maybe-err [x] (s/either x Fault))
+
+(def SupervisordInfo
+  {:processes (maybe-err [SupervisorProcess])
+   :version   (maybe-err s/Str)
+   :id        (maybe-err s/Str)
+   :state     (maybe-err SupervisordState)
+   :pid       (maybe-err s/Num)})
 
 (defn xml-url [port] (str "http://" port "/RPC2"))
 
@@ -10,43 +56,54 @@
   "Generates an api client out of a config entry"
   (partial xml-rpc/call (get-url supervisor)))
 
-(defn get-process-info [client name]
-   "Returns a map of information about a process"
+(s/defn get-process-info :- (maybe-err SupervisorProcess)
+  [client name]
+  "Returns a map of information about a process"
   (client :supervisor.getProcessInfo name))
 
-(defn get-all-process-info [client]
+(s/defn get-all-process-info :- (maybe-err [SupervisorProcess])
+  [client]
   "Reads all process information from a supervisord"
   (client :supervisor.getAllProcessInfo))
 
-(defn start [client name]
+(s/defn start :- (maybe-err Boolean)
+  [client name]
   "Starts a supervised process"
   (client :supervisor.startProcess name))
 
-(defn start-all [client]
+(s/defn start-all [client] :- (maybe-err [SupervisorProcessStatus])
   "Starts all supervised process"
   (client :supervisor.startAllProcesses))
 
-(defn stop [client name]
+(s/defn stop [client name] :- (maybe-err Boolean)
   "Stops a supervised process"
   (client :supervisor.stopProcess name))
 
-(defn stop-all [client]
+(s/defn stop-all [client] :- (maybe-err [SupervisorProcessStatus])
   "Stops all supervised process"
   (client :supervisor.stopAllProcesses))
 
-(defn get-supervisord-version [client]
+(s/defn get-supervisord-version :- (maybe-err s/Str)
+  [client]
   (client :supervisor.getSupervisorVersion))
 
-(defn get-supervisord-id [client]
+(s/defn get-supervisord-id :- (maybe-err s/Str)
+  [client]
   (client :supervisor.getIdentification))
 
-(defn get-supervisord-state [client]
+(s/defn get-supervisord-state :- (maybe-err SupervisordState)
+  [client]
   (client :supervisor.getState))
 
-(defn get-supervisord-pid [client]
+(s/defn get-supervisord-pid :- (maybe-err s/Num)
+  [client]
   (client :supervisor.getPID))
 
-(defn get-supervisord-info [client]
+(defn- map-vals [f m]
+  (reduce (fn [m [k v]] (assoc m k (f v))) {} m))
+
+(s/defn get-supervisord-info :- (map-vals maybe-err SupervisordInfo)
+  [client]
   "Fetches invormation about the supervisord server"
   (let [processes (future (get-all-process-info    client))
         version   (future (get-supervisord-version client))
@@ -145,44 +202,3 @@
    :read-stderr read-full-process-stderr
    :tail-stdout tail-process-stdout
    :tail-stderr tail-process-stderr})
-
-(def methods*
-  "Exhaustive list of supervisord API, for reference"
-  ["supervisor.addProcessGroup"
-   "supervisor.clearAllProcessLogs"
-   "supervisor.clearLog"
-   "supervisor.clearProcessLog"
-   "supervisor.clearProcessLogs"
-   "supervisor.getAPIVersion"
-   "supervisor.getAllConfigInfo"
-   "supervisor.getAllProcessInfo"
-   "supervisor.getIdentification"
-   "supervisor.getPID"
-   "supervisor.getProcessInfo"
-   "supervisor.getState"
-   "supervisor.getSupervisorVersion"
-   "supervisor.getVersion"
-   "supervisor.readLog"
-   "supervisor.readMainLog"
-   "supervisor.readProcessLog"
-   "supervisor.readProcessStderrLog"
-   "supervisor.readProcessStdoutLog"
-   "supervisor.reloadConfig"
-   "supervisor.removeProcessGroup"
-   "supervisor.restart"
-   "supervisor.sendProcessStdin"
-   "supervisor.sendRemoteCommEvent"
-   "supervisor.shutdown"
-   "supervisor.startAllProcesses"
-   "supervisor.startProcess"
-   "supervisor.startProcessGroup"
-   "supervisor.stopAllProcesses"
-   "supervisor.stopProcess"
-   "supervisor.stopProcessGroup"
-   "supervisor.tailProcessLog"
-   "supervisor.tailProcessStderrLog"
-   "supervisor.tailProcessStdoutLog"
-   "system.listMethods"
-   "system.methodHelp"
-   "system.methodSignature"
-   "system.multicall"])
