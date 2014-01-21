@@ -1,6 +1,7 @@
 #!/bin/sh
 lein with-profile release \
   do \
-    cljsbuild once release, \
+    cljx once, \
     aggravate, \
+    cljsbuild once release, \
     ring uberjar
