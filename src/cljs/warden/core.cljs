@@ -22,12 +22,13 @@
       (swap! state assoc-in cursor (-> response :body cljson->clj))
       (recur (<! ch)))))
 
-(defn supervisor-node [{:keys [pid state id name]}]
+(defn supervisor-node [{:keys [processes pid state id name]}]
   "Supervisord dom section"
   [:section.supervisor
    [:h2 name]
    [:h4 id "-" [:span.pid pid]]
-   [:span.state (:statename state)]])
+   [:span.state (:statename state)
+                (str " - " (count processes) " processes")]])
 
 (defn app [state]
   "App as a function of application state"

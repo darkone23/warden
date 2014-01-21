@@ -8,5 +8,10 @@
       [(:name host) (client host)])))
 
 (defn supervisors []
-  (for [[name client] clients]
-    (merge {:name name} (get-supervisord-info client))))
+  "Fetch information about all supervisors in the config...
+   now with concurrency!"
+  (map deref
+    (for [{name :name} (:hosts config)]
+      (future
+        (let [client (get clients name)]
+          (merge {:name name} (get-supervisord-info client)))))))

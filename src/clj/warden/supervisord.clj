@@ -10,13 +10,6 @@
   "Generates an api client out of a config entry"
   (partial xml-rpc/call (get-url supervisor)))
 
-(defn get-supervisord-info [client]
-  "Fetches invormation about the supervisord server"
-  {:version (client :supervisor.getSupervisorVersion)
-   :id      (client :supervisor.getIdentification)
-   :state   (client :supervisor.getState)
-   :pid     (client :supervisor.getPID)})
-
 (defn get-process-info [client name]
    "Returns a map of information about a process"
   (client :supervisor.getProcessInfo name))
@@ -40,6 +33,31 @@
 (defn stop-all [client]
   "Stops all supervised process"
   (client :supervisor.stopAllProcesses))
+
+(defn get-supervisord-version [client]
+  (client :supervisor.getSupervisorVersion))
+
+(defn get-supervisord-id [client]
+  (client :supervisor.getIdentification))
+
+(defn get-supervisord-state [client]
+  (client :supervisor.getState))
+
+(defn get-supervisord-pid [client]
+  (client :supervisor.getPID))
+
+(defn get-supervisord-info [client]
+  "Fetches invormation about the supervisord server"
+  (let [processes (future (get-all-process-info    client))
+        version   (future (get-supervisord-version client))
+        id        (future (get-supervisord-id      client))
+        state     (future (get-supervisord-state   client))
+        pid       (future (get-supervisord-pid     client))]
+    {:processes @processes
+     :version   @version
+     :id        @id
+     :state     @state
+     :pid       @pid}))
 
 (defn read-supervisord-log [client offset bytes]
   "Reads a number of bytes from the supervisord log, starting at offset"

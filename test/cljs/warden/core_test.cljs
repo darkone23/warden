@@ -8,15 +8,11 @@
 (init) ;; start the test runner
 
 (def test-s {:pid :pid
+             :processes []
              :state {:statename :state}
              :id :id
              :name :name})
 
 (facts "Dom representations can be generated"
   (fact "supervisor nodes!"
-    (supervisor-node test-s) =>
-      ;; replace with a userful test, not one that tests impl
-      [:section.supervisor
-       [:h2 (:name test-s)]
-       [:h4 (:id test-s) "-" [:span.pid (:pid test-s)]]
-       [:span.state (-> test-s :state :statename)]]))
+    (supervisor-node test-s) => vector?))
