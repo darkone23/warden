@@ -11,7 +11,8 @@
   "Fetch information about all supervisors in the config...
    now with concurrency!"
   (map deref
-    (for [{name :name} (:hosts config)]
+    (for [{:keys [host name port]} (:hosts config)]
       (future
         (let [client (get clients name)]
-          (merge {:name name} (get-supervisord-info client)))))))
+          (merge {:host host :port port :name name}
+                 (get-supervisord-info client)))))))

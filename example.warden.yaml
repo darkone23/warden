@@ -3,4 +3,9 @@
 
 hosts:
   - name: web
-    port: localhost:9001
+    host: web.example.com
+    port: 9001
+
+  - name: db
+    host: db.example.com
+    port: 9001

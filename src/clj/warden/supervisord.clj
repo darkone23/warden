@@ -4,9 +4,9 @@
             [warden.schemas :refer (SupervisorProcess SupervisorProcessStatus SupervisordState SupervisordInfo maybe-err)]
             [clojure.core.async :refer (chan timeout close! alts! go-loop >!)]))
 
-(defn xml-url [port] (str "http://" port "/RPC2"))
+(defn xml-url [host port] (str "http://" host ":" port "/RPC2"))
 
-(defn get-url [{port :port}] (xml-url port))
+(defn get-url [{:keys [host port]}] (xml-url host port))
 
 (defn client [supervisor]
   "Generates an api client out of a config entry"

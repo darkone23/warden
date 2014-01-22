@@ -4,7 +4,7 @@
 (defn valid-entry? [entry]
   "Verify a host entry provides a name/port pair"
   (and (map? entry)
-       (= #{:name :port}
+       (= #{:name :host :port}
           (-> entry keys set))))
 
 (defn valid-config? [config]
