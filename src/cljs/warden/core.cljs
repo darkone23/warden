@@ -31,11 +31,12 @@
              [:header [:h1 name]]
              [:div.supervisors (map supervisor supervisors)]]))))
 
-(defn supervisor [{:keys [name processes pid state id version]}]
-  (let [supervisord-description (str name " - " id " v" version " - " pid)
+(defn supervisor [{:keys [host port name processes pid state id version]}]
+  (let [public-url (str "http://" host ":" port)
+        supervisord-description (str name " - " id " v" version " - " pid)
         supervisord-state (str (:statename state) " - " (count processes) " processes")]
     [:section.supervisor
-     [:h4 supervisord-description]
+     [:h4 [:a {:href public-url :target "_blank"} supervisord-description]]
      [:span.state supervisord-state]
      [:ul.processes (map process processes)]]))
 
