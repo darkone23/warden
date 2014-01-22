@@ -22,11 +22,7 @@
       (swap! state assoc-in cursor (-> response :body cljson->clj))
       (recur (<! ch)))))
 
-(defn supervisor [{:keys [name processes pid state id version]}]
-  [:section.supervisor
-   [:h4 (str name " - " id " v" version " - " pid)]
-   [:span.state (str (:statename state) " - " (count processes) " processes")]])
-
+(declare process supervisor)
 (defn app [state]
   "App as a function of application state"
   (let [{:keys [supervisors name]} state]
@@ -35,10 +31,21 @@
              [:header [:h1 name]]
              [:div.supervisors (map supervisor supervisors)]]))))
 
+(defn supervisor [{:keys [name processes pid state id version]}]
+  (let [supervisord-description (str name " - " id " v" version " - " pid)
+        supervisord-state (str (:statename state) " - " (count processes) " processes")]
+    [:section.supervisor
+     [:h4 supervisord-description]
+     [:span.state supervisord-state]
+     [:ul.processes (map process processes)]]))
+
+(defn process [{:keys [name description]}]
+  [:li (str name" - " description)])
+
 (defn ^:export start []
   (let [poll-ch (chan 1)
         app-state (atom {:supervisors []
                          :name "Warden"})]
-    (poll! "/api/supervisors" 5000 poll-ch)
+    (poll! "/api/supervisors" 2500 poll-ch)
     (sync-state! poll-ch app-state [:supervisors])
     (om/root app-state app js/document.body)))
