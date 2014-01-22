@@ -1,10 +1,14 @@
 html, body, .main {
     height: 100%;
-    background-color: hsla(40, 85%, 85%, 0.5);
 }
 
-body {
-    background-image: url('../img/gplaypattern.png');
+html {
+    background: url('../img/gplaypattern.png') repeat;
+}
+
+.main {
+    background-color: hsla(40, 85%, 85%, 0.5);
+    overflow: auto;
 }
 
 * {
@@ -29,7 +33,7 @@ a:hover {
     color: #666;
 }
 
-header {
+.main > header {
     padding-left: 25px;
     min-height: 10%;
     max-height: 150px;
@@ -37,17 +41,22 @@ header {
     z-index: 1;
 }
 
-header h1 {
+.main > header {
     font-family: 'open_sansbold', Arial, sans-serif;
     letter-spacing: 0.05em;
 }
-small.description {
-    padding-left: 15px;
-    font-size: 65%;
-    letter-spacing: 0;
+
+.main h3.description {
+    padding-left: .5em;
+    line-height: 1.8em;
 }
 
 .supervisors {
-    padding: 100px 0 0 25px;
+    padding: 80px 25px 0;
     height: 100%;
+}
+
+.supervisor {
+    margin-top: 20px;
+    border-bottom: 2px solid #ccc;
 }
