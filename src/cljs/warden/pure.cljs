@@ -15,3 +15,6 @@
   "create a grid unit, either an entire row or size x of n"
   ([html] (update-in html [0] add-class (str "pure-u-1")))
   ([x n html] (update-in html [0] add-class (str "pure-u-" x "-" n))))
+
+(defn menu [html]
+  (update-in html [0] add-class  "pure-menu.pure-menu-fixed.pure-menu-horizontal"))

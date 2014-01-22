@@ -1,10 +1,10 @@
-html {
+html, body, .main {
     height: 100%;
+    background-color: hsla(40, 85%, 85%, 0.5);
 }
 
 body {
     background-image: url('../img/gplaypattern.png');
-    height: 100%;
 }
 
 * {
@@ -29,27 +29,25 @@ a:hover {
     color: #666;
 }
 
-.main {
-    padding: 20px 40px 20px 40px;
-    height: 100%;
-}
-
 header {
     padding-left: 25px;
     min-height: 10%;
     max-height: 150px;
-    background-color: hsla(144, 57%, 52%, .8);
-    border-bottom: 1px solid #505050
+    background-color: hsl(144, 57%, 52%);
+    z-index: 1;
 }
 
 header h1 {
     font-family: 'open_sansbold', Arial, sans-serif;
+    letter-spacing: 0.05em;
+}
+small.description {
+    padding-left: 15px;
+    font-size: 65%;
+    letter-spacing: 0;
 }
 
-
 .supervisors {
-    border-top: 1px solid #332525;
-    padding-left: 25px;
-    min-height: 90%;
-    background-color: hsla(40, 85%, 85%, 0.5);
+    padding: 100px 0 0 25px;
+    height: 100%;
 }
