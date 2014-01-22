@@ -13,7 +13,9 @@
   (let [url (get-url supervisor)]
     (fn [& args]
       (try (apply xml-rpc/call url args)
-           (catch Exception e)))))
+           (catch Exception e
+             {:fault-code -1
+              :fault-string (.getMessage e)})))))
 
 (s/defn get-process-info :- (maybe-err SupervisorProcess)
   [client name]

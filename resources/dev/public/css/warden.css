@@ -35,8 +35,6 @@ a:hover {
 
 .main > header {
     padding-left: 25px;
-    min-height: 10%;
-    max-height: 150px;
     background-color: hsl(144, 57%, 52%);
     z-index: 1;
 }
@@ -57,6 +55,6 @@ a:hover {
 }
 
 .supervisor {
-    margin-top: 20px;
+    padding: 10px 0;
     border-bottom: 2px solid #ccc;
 }

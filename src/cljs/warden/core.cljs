@@ -1,38 +1,8 @@
 (ns warden.core
   (:require [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true]
-            [sablono.core :as html :refer (html) :include-macros true]
-            [warden.pure :refer (responsive-grid menu grid-unit grid-row)]
+            [warden.components :refer (app)]
             [warden.net :refer (poll! sync-state!)]
             [cljs.core.async :refer (chan)]))
-
-(declare process supervisor)
-
-(defn app [state]
-  "App as a function of application state"
-  (let [{:keys [supervisors name description]} state]
-    (-> (responsive-grid [:div.main
-          (menu            [:header (grid-unit [:h2 name])
-                                    (grid-unit [:h3.description description])])
-          (grid-row      [:div.supervisors (map supervisor supervisors)])])
-        html om/component)))
-
-(defn supervisor [{:keys [host port name processes pid state id version]}]
-  (let [public-url (str "http://" host ":" port)
-        supervisord-description (str name " - " id " v" version " - " pid)
-        supervisord-state (str (:statename state) " - " (count processes) " processes")]
-    [:section.supervisor
-     (responsive-grid
-       [:header
-         (grid-unit 5 6
-           [:span.description
-             [:a {:href public-url :target "_blank"} supervisord-description]])
-         (grid-unit 1 6
-           [:span.state supervisord-state])])
-     [:ul.processes (map process processes)]]))
-
-(defn process [{:keys [name description]}]
-  [:li (str name" - " description)])
 
 (defn ^:export start []
   (let [poll-ch (chan 1)
