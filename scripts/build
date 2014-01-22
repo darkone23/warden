@@ -1,7 +1,16 @@
 #!/bin/sh
+
+set -e
+
+echo "Building warden... "
+
 lein with-profile release \
   do \
-    cljx once, \
+    clean, \
     aggravate, \
+    cljx once, \
+    cljsbuild clean release, \
     cljsbuild once release, \
     ring uberjar
+
+echo "All done!"
