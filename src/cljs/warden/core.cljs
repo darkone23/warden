@@ -1,42 +1,29 @@
 (ns warden.core
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [sablono.core :as html :refer [html] :include-macros true]
-            [cljs-http.client :as http]
-            [tailrecursion.cljson :refer [cljson->clj]]
-            [cljs.core.async :refer [chan >! <! timeout]])
-  (:require-macros [cljs.core.async.macros :refer [go-loop]]))
-
-(defn poll! [url wait ch]
-  "Poll a url every `wait` ms, delivering responses on ch"
-  ;; TODO: handle errors from http/get
-  (go-loop [enabled true response (<! (http/get url))]
-    (>! ch response)
-    (<! (timeout wait))
-    (recur enabled (<! (http/get url)))))
-
-(defn sync-state! [ch state cursor]
-  "Keep cursor synced with http responses from channel"
-  (go-loop [response (<! ch)]
-    (when response
-      (swap! state assoc-in cursor (-> response :body cljson->clj))
-      (recur (<! ch)))))
+            [sablono.core :as html :refer (html) :include-macros true]
+            [warden.pure :refer (grid-unit responsive-grid)]
+            [warden.net :refer (poll! sync-state!)]
+            [cljs.core.async :refer (chan)]))
 
 (declare process supervisor)
+
 (defn app [state]
   "App as a function of application state"
   (let [{:keys [supervisors name]} state]
-    (om/component
-      (html [:div.main
-             [:header [:h1 name]]
-             [:div.supervisors (map supervisor supervisors)]]))))
+    (-> (responsive-grid [:div.main
+          (grid-unit [:header [:h1 name]])
+          (grid-unit [:div.supervisors (map supervisor supervisors)])])
+        html om/component)))
 
 (defn supervisor [{:keys [host port name processes pid state id version]}]
   (let [public-url (str "http://" host ":" port)
         supervisord-description (str name " - " id " v" version " - " pid)
         supervisord-state (str (:statename state) " - " (count processes) " processes")]
     [:section.supervisor
-     [:h4 [:a {:href public-url :target "_blank"} supervisord-description]]
+     [:h4 [:a {:href public-url
+               :target "_blank"}
+           supervisord-description]]
      [:span.state supervisord-state]
      [:ul.processes (map process processes)]]))
 

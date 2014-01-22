@@ -1,9 +1,55 @@
+html {
+    height: 100%;
+}
+
 body {
-    background-image: url('../img/geometry.png');
+    background-image: url('../img/gplaypattern.png');
+    height: 100%;
+}
+
+* {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+body,
+.pure-g   [class *= "pure-u"],
+.pure-g-r [class *= "pure-u"] {
     font-family: 'open_sansregular', Arial, sans-serif;
 }
 
-div.main {
-    width: 960px;
-    margin: 0 auto;
+a {
+    text-decoration: none;
+    color: #1B1B1B;
+}
+
+a:hover {
+    text-weight: bold;
+    color: #666;
+}
+
+.main {
+    padding: 20px 40px 20px 40px;
+    height: 100%;
+}
+
+header {
+    padding-left: 25px;
+    min-height: 10%;
+    max-height: 150px;
+    background-color: hsla(144, 57%, 52%, .8);
+    border-bottom: 1px solid #505050
+}
+
+header h1 {
+    font-family: 'open_sansbold', Arial, sans-serif;
+}
+
+
+.supervisors {
+    border-top: 1px solid #332525;
+    padding-left: 25px;
+    min-height: 90%;
+    background-color: hsla(40, 85%, 85%, 0.5);
 }
