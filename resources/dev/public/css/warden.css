@@ -58,3 +58,7 @@ a:hover {
     padding: 10px 0;
     border-bottom: 2px solid #ccc;
 }
+
+.supervisor.error span {
+    padding-left: 10px;
+}
