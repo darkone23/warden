@@ -59,6 +59,67 @@ a:hover {
     border-bottom: 2px solid #ccc;
 }
 
+.supervisor .process .name {
+    padding-right: 10px;
+    font-size: 1.15em;
+    line-height: 1.5em;
+}
+
+.supervisor .process .description {
+    line-height: 2em;
+    font-size: 0.9em;
+}
+
+.supervisor .process .state {
+    float: right;
+    padding: 0.3em;
+    border-radius: 0.2em;
+}
+
+.supervisor .process.RUNNING .state {
+    background-color: hsl(144, 57%, 52%);
+}
+
+.supervisor .process.FATAL .state {
+    background-color: hsl(0, 94%, 68%);
+}
+
+.supervisor .process.BACKOFF .state {
+    background-color: hsl(46, 100%, 72%);
+}
+
+.supervisor .process.EXITED .state {
+    background-color: hsl(50, 20%, 80%);
+}
+
+.supervisor .process.STARTING .state {
+    background-color: hsl(200, 40%, 80%);
+}
+
 .supervisor.error span {
     padding-left: 10px;
+}
+
+.supervisor header {
+    font-size: 1.12em;
+}
+
+.supervisor header .state {
+    text-align: right;
+    font-size: 1.25em;
+}
+
+.supervisor.error code.err {
+    padding-left: 10px;
+    line-height: 1.5em;
+    font-size: 1.25em;
+    font-family: monospace;
+}
+
+.supervisor.error code.err::before {
+    content: " | "
+}
+
+.supervisor.error > i {
+    float: right;
 }
