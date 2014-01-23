@@ -28,7 +28,7 @@
          (hide-on-phone
          (grid-unit 1 6 [(add-class :span.state state)
                           [:span.process-count (count processes)]
-                          (font-icon :check)]))])
+                          (font-icon :eye)]))])
      (responsive-grid [:ul.processes (map process processes)])]))
 
 (defn supervisor [supervisor]

@@ -59,6 +59,23 @@ a:hover {
     border-bottom: 2px solid #ccc;
 }
 
+.supervisor header {
+    font-size: 1.12em;
+}
+
+.supervisor header .process-count {
+    margin-right: 5px;
+}
+
+.supervisor header .state {
+    text-align: right;
+    font-size: 1.25em;
+}
+
+.supervisor .process {
+    padding: 5px 0;
+}
+
 .supervisor .process .name {
     padding-right: 10px;
     font-size: 1.15em;
@@ -76,37 +93,39 @@ a:hover {
     border-radius: 0.2em;
 }
 
+.supervisor .process.STARTING .state {
+    /* light blue */
+    background-color: hsl(200, 40%, 80%);
+}
+
 .supervisor .process.RUNNING .state {
+    /* green */
     background-color: hsl(144, 57%, 52%);
 }
 
-.supervisor .process.FATAL .state {
-    background-color: hsl(0, 94%, 68%);
+.supervisor .process.STOPPED .state {
+    /* grey */
+    background-color: hsl(50, 20%, 80%);
 }
 
 .supervisor .process.BACKOFF .state {
+    /* yellow */
     background-color: hsl(46, 100%, 72%);
 }
 
 .supervisor .process.EXITED .state {
-    background-color: hsl(50, 20%, 80%);
+    /* red */
+    background-color: hsl(0, 94%, 68%);
 }
 
-.supervisor .process.STARTING .state {
-    background-color: hsl(200, 40%, 80%);
+.supervisor .process.FATAL .state {
+    /* red */
+    background-color: hsl(0, 94%, 68%);
 }
+
 
 .supervisor.error span {
     padding-left: 10px;
-}
-
-.supervisor header {
-    font-size: 1.12em;
-}
-
-.supervisor header .state {
-    text-align: right;
-    font-size: 1.25em;
 }
 
 .supervisor.error code.err {
