@@ -10,6 +10,7 @@
                  [rm-hull/ring-gzip-middleware "0.1.7"]
                  [org.clojure/clojurescript "0.0-2138"]
                  [tailrecursion/cljson "1.0.6"]
+                 [alandipert/storage-atom "1.1.2"]
                  [prismatic/schema "0.2.0"]
                  [om "0.1.7"]
                  [sablono "0.2.1"]
