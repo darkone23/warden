@@ -1,8 +1,11 @@
 (ns warden.helpers)
 
 (defn add-class [el class]
-  "adds a class-name to a sablono html vector"
-  (-> (name el) (str "." class) keyword))
+  "adds a class-name to a sablano keyword el"
+  (keyword (str (name el) "." class)))
+
+(defn external-link [url & content]
+  [:a {:href url :target "_blank"} url])
 
 ;; helpers for working with font awesome
 ;; http://fortawesome.github.io/Font-Awesome/

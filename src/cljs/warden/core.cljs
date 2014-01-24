@@ -7,7 +7,7 @@
 
 (defn ^:export start []
   (let [poll-ch (chan 1)
-        config (local-storage (atom {}) :config)
+        config (local-storage (atom {:showing #{}}) :config)
         app-state (atom {:supervisors []
                           :config config
                           :name "warden"
