@@ -2,6 +2,16 @@
          (:require [schema.core :as s])
   #+cljs (:require-macros [schema.macros :as s]))
 
+(def SupervisorHost
+  {:name s/Str
+   :host s/Str
+   :port s/Num
+   (s/optional-key :user) s/Str
+   (s/optional-key :pass) s/Str})
+
+(def Configuration
+  {:hosts [SupervisorHost]})
+
 (def SupervisorProcess
   {:group          s/Str
    :name           s/Str

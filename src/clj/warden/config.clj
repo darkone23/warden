@@ -1,17 +1,14 @@
 (ns warden.config
-  (:require [clj-yaml.core :as yaml]))
+  (:require [warden.schemas :refer (Configuration)]
+            [schema.core :refer (validate)]
+            [clj-yaml.core :as yaml]))
 
-(defn valid-entry? [entry]
-  "Verify a host entry provides a name/port pair"
-  (and (map? entry)
-       (= #{:name :host :port}
-          (-> entry keys set))))
-
-(defn valid-config? [config]
-  "Ensures configuration structure"
-  (if-let [{hosts :hosts} config]
-    (and (sequential? hosts)
-         (every? valid-entry? hosts))))
+(defn valid-config [config]
+  "returns a valid configuration or nothing"
+  (try
+    (validate Configuration config)
+    (catch Exception e
+      (println (.getMessage e)))))
 
 (defn read-config []
   "Reads the config from the the 'config' system property"
@@ -24,7 +21,6 @@
 (def config
   "Warden application configuration"
   (let [config (yaml/parse-string (read-config))]
-    (if (valid-config? config)
-      config
-      (do (println "Malformed config: continuing without configuration...")
-          {:hosts []}))))
+    (or (valid-config config)
+        (do (println "Malformed config: continuing without configuration...")
+            {:hosts []}))))
