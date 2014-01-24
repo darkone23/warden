@@ -18,5 +18,4 @@
 
 (facts "Dom representations can be generated"
   (fact "supervisor nodes!"
-    (s/validate SupervisordInfo test-s) => test-s
-    (supervisor test-s) => vector?))
+    (s/validate SupervisordInfo test-s) => test-s))

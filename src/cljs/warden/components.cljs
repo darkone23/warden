@@ -1,62 +1,71 @@
 (ns warden.components
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [sablono.core :as html :refer (html) :include-macros true]
-            [warden.helpers :refer (add-class external-link hide-on-phone menu
-                                    font-icon responsive-grid grid-unit grid-row)]))
+            [cljs.core.async :refer (chan)]
+            [warden.net :refer (poll! sync-state!)]))
 
-(declare app process supervisor)
+(defn process [{:keys [name statename description]} owner]
+  (om/component
+   (dom/li #js {:className (str statename " process pure-u-1")}
+     (dom/span #js {:className "name pure-u"} name)
+     (dom/span #js {:className "description pure-u"} description)
+     (dom/span #js {:className "state pure-u"} statename))))
 
-(defn supervisor-err
-  "Render the error section for an unreachable supervisor"
-  [{:keys [host name port] {err :fault-string} :state}]
-  (let [message (str "Could not connect to " name " at " host ":"  port)]
-    (grid-row [:section.supervisor.error
-               (grid-unit [:span.message message])
-               (grid-unit [:code.err err])
-               (font-icon :exclamation-triangle 2)])))
-
-(defn supervisor-ok
-  "Render an element representing a supervisord instance "
-  [{:keys [host port name processes pid state id version] :as s} config]
+(defn supervisor-ok [{:keys [host port name processes state] :as s} owner]
   (let [public-url (str "http://" host ":" port)
         description (str name "@" host)
         state (:statename state)
-        showing? (get (:showing @config) name)]
-    [:section.supervisor
-     (responsive-grid
-      [:header
-       (grid-unit 5 6 [:span.description
-                       (external-link public-url description)])
-       (hide-on-phone
-        (grid-unit 1 6 [(add-class :span.state state)
-                        [:span.process-count (count processes)]
-                        (font-icon :eye)]))])
-     (let [ul (add-class :ul.process (if showing? :showing :hidden))]
-       (responsive-grid
-        [ul (map process processes (repeat config))]))]))
+        showing? true
+        show-class (if showing? "showing" "hidden")]
+    (dom/section #js {:className "supervisor error pure-u-1"}
+      (dom/header #js {:className "pure-g-r"}
+        (dom/span #js {:className "description pure-u-5-6"}
+          (dom/a #js {:href public-url :target "_blank"} description))
+        (dom/span #js {:className (str "state " state " pure-u-1-6 pure-hidden-phone")}
+          (dom/span #js {:className "process-count"} (count processes))
+          (dom/i #js {:className "fa fa-eye"})))
+      (apply dom/ul #js {:className (str "process " show-class)}
+        (om/build-all process processes)))))
 
-(defn supervisor [supervisor config]
-  (if (get-in supervisor [:state :fault-string])
-    (supervisor-err supervisor)
-    (supervisor-ok supervisor config)))
+(defn supervisor-err [{:keys [host name port] {err :fault-string} :state} owner]
+  (let [message (str "Could not connect to " name " at " host ":"  port)]
+    (dom/section #js {:className "supervisor error pure-u-1"}
+      (dom/span #js {:className "message pure-u"} message)
+      (dom/code #js {:className "err pure-u"} err)
+      (dom/i #js {:className "fa fa-exclamation-triangle fa-2x"}))))
 
-(defn process [{:keys [name statename description]} config]
-  (grid-row [(add-class :li.process statename)
-    (grid-unit [:span.name name])
-    (grid-unit [:span.description description])
-    (grid-unit [:span.state statename])]))
+(defn supervisor [state owner]
+  (om/component
+   (if (get-in state [:state :fault-string])
+     (supervisor-err state owner)
+     (supervisor-ok state owner))))
 
-(defn app [state]
+(defn supervisors [state owner]
+  (om/component
+   (apply dom/div #js {:className "supervisors pure-u-1"}
+     (om/build-all supervisor (:supervisors state)))))
+
+(defn header-menu [state owner]
+  (om/component
+   (dom/header #js {:className "pure-menu pure-menu-fixed pure-menu-horizontal"}
+    (dom/h2 #js {:className "pure-u"} (:name state))
+    (dom/h3 #js {:className "description pure-u pure-hidden-phone"} (:description state)))))
+
+(defn app [state owner]
   "App as a function of application state"
-  (let [{:keys [config supervisors name description]} state]
-    (om/component
-     (html
-      (responsive-grid
-       [:div.main
-        (menu
-         [:header
-          (grid-unit [:h2 name])
-          (-> [:h3.description description] grid-unit hide-on-phone)])
-        (grid-row
-         [:div.supervisors (map supervisor supervisors (repeat config))])])))))
+  (reify
+    om/IInitState
+    (init-state [this]
+      {:chans {:supervisors (chan 1)}})
+
+    om/IWillMount
+    (will-mount [this]
+      (let [ch (om/get-state owner [:chans :supervisors])]
+        (poll! "/api/supervisors" 2500 ch)
+        (sync-state! ch owner [:supervisors])))
+
+    om/IRender
+    (render [this]
+      (dom/div #js {:className "main pure-g-r"}
+        (om/build header-menu state)
+        (om/build supervisors state)))))
