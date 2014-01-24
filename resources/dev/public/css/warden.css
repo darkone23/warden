@@ -124,10 +124,6 @@ a:hover {
 }
 
 
-.supervisor.error span {
-    padding-left: 10px;
-}
-
 .supervisor.error code.err {
     padding-left: 10px;
     line-height: 1.5em;

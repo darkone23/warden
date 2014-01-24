@@ -10,7 +10,7 @@
 (defn ^:export start []
   (go
    (let [supervisors (parse (<! (http/get "/api/supervisors")))
-         config (local-storage (atom {:showing #{}}))
+         config (local-storage (atom {:showing #{}}) :config)
          app-state (atom {:name "warden"
                           :description "process management"
                           :supervisors supervisors
