@@ -17,7 +17,7 @@
         state (:statename state)
         showing? true
         show-class (if showing? "showing" "hidden")]
-    (dom/section #js {:className "supervisor error pure-u-1"}
+    (dom/section #js {:className "supervisor pure-u-1"}
       (dom/header #js {:className "pure-g-r"}
         (dom/span #js {:className "description pure-u-5-6"}
           (dom/a #js {:href public-url :target "_blank"} description))
