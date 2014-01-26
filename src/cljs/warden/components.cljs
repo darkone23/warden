@@ -13,21 +13,24 @@
      (dom/span #js {:className "description pure-u"} description)
      (dom/span #js {:className "state pure-u"} statename))))
 
-(defn supervisor-ok [{:keys [id url state-name description processes] :as super} owner]
+(defn supervisor-id [{:keys [host name port]}] (str host name port))
+(defn showing? [config super] (get (:showing @config) (supervisor-id super)))
+
+(defn supervisor-ok [{:keys [url state-name description processes] :as super} owner]
   (reify
     om/IRenderState
     (render-state [this {:keys [super-chan config]}]
-      (let [show-class (if showing? "showing" "hidden")]
-    (dom/section #js {:className "supervisor pure-u-1"}
-      (dom/header #js {:className "pure-g-r"
-                       :onClick #(put! super-chan [::toggle-showing @super])}
-        (dom/span #js {:className "description pure-u-5-6"}
-          (dom/a #js {:href url :target "_blank"} description))
-        (dom/span #js {:className (str "state " state-name " pure-u-1-6 pure-hidden-phone")}
-          (dom/span #js {:className "process-count"} (count processes))
-          (dom/i #js {:className "fa fa-eye"})))
-      (apply dom/ul #js {:className (str "process " show-class)}
-        (om/build-all process processes)))))))
+      (let [show-class (if (showing? config super) "opened" "closed")]
+        (dom/section #js {:className "supervisor pure-u-1"}
+          (dom/header #js {:className "pure-g-r"
+                           :onClick #(put! super-chan [::toggle-showing @super])}
+            (dom/span #js {:className "description pure-u-5-6"}
+              (dom/a #js {:href url :target "_blank"} description))
+            (dom/span #js {:className (str "state " state-name " pure-u-1-6 pure-hidden-phone")}
+              (dom/span #js {:className "process-count"} (count processes))
+              (dom/i #js {:className "fa fa-eye"})))
+          (apply dom/ul #js {:className (str "process " show-class)}
+            (om/build-all process processes)))))))
 
 (defn supervisor-err [{:keys [host name port] {err :fault-string} :state}]
   (let [message (str "Could not connect to " name " at " host ":"  port)]
@@ -43,10 +46,15 @@
 
     om/IWillMount
     (will-mount [this]
-      (let [ch (om/get-state owner :super-chan)]
+      (let [ch (om/get-state owner :super-chan)
+            config (om/get-state owner :config)]
         (go-loop [[k v] (<! ch)]
-          (when (= k ::toggle-showing)
-            (js/console.dir v))
+          (let [id (supervisor-id v)]
+            (when (= k ::toggle-showing)
+              (if (showing? config v)
+                (swap! config update-in [:showing] disj id)
+                (swap! config update-in [:showing] conj id))
+              (om/transact! state identity)))
           (recur (<! ch)))))
 
     om/IRenderState
@@ -64,8 +72,7 @@
           {:init-state (om/get-state owner)
            :fn (fn [{:keys [host port name state] :as super}]
                  (merge super
-                   {:id (str host port name)
-                    :url (str "http://" host ":" port)
+                   {:url (str "http://" host ":" port)
                     :state-name (:statename state)
                     :description (str name "@" host)}))})))))
 

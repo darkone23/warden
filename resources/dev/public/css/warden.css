@@ -61,6 +61,7 @@ a:hover {
 
 .supervisor header {
     font-size: 1.12em;
+    cursor: pointer;
 }
 
 .supervisor header .process-count {
@@ -74,6 +75,13 @@ a:hover {
 
 .supervisor .process {
     padding: 5px 0;
+}
+
+.supervisor .process.opened {
+    display: block;
+}
+.supervisor .process.closed {
+    display: none;
 }
 
 .supervisor .process .name {
