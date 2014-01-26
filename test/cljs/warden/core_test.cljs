@@ -1,7 +1,6 @@
 (ns warden.core-test
   (:require [schema.core :as s]
             [warden.schemas :refer (SupervisordInfo)]
-            [warden.components :refer [supervisor]]
             [purnam.cljs :refer [aget-in aset-in js-equals]])
   (:require-macros [schema.macros :as s]
                    [purnam.test :refer [init]]
