@@ -1,6 +1,6 @@
 (ns warden.core
   (:require [om.core :as om :include-macros true]
-            [warden.components :refer (app)]))
+            [warden.components.core :refer (app)]))
 
 (defn ^:export start []
   (let [app-state (atom {:name "warden"
