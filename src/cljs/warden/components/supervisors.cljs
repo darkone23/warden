@@ -9,7 +9,7 @@
 ;; helper fns for working with supervisors
 (defn supervisor-id [{:keys [host name port]}]
   "id for referencing a particular supervisor server"
-  (str host name port))
+  (str host "-" port "-" name))
 
 (defn healthy? [{:keys [processes]}]
   "determines whether a supervisor server is healthy"
@@ -73,11 +73,13 @@
             config (om/get-state owner :config)]
         (go-loop [[k v] (<! ch)]
           (let [id (supervisor-id v)]
-            (when (= k ::toggle-showing)
-              (if (showing? config v)
-                (swap! config update-in [:showing] disj id)
-                (swap! config update-in [:showing] conj id))
-              (om/transact! state identity)))
+            (match [k]
+              [::toggle-showing]
+                (if (showing? config v)
+                  (swap! config update-in [:showing] disj id)
+                  (swap! config update-in [:showing] conj id))
+              :else nil)
+            (om/transact! state identity))
           (recur (<! ch)))))))
 
 (defn supervisors [state owner]

@@ -2,43 +2,44 @@
   (:use compojure.core)
   (:require [warden.config :refer (config)]
             [warden.supervisord :refer (client get-supervisord-info)]
-            [liberator.core :refer (defresource)]
+            [liberator.core :refer (defresource resource)]
             [clojure.data.json :as json]
             [tailrecursion.cljson :refer (clj->cljson)]
             [clojure.core.match :refer (match)]))
 
-(defn id-for [{:keys [name host]}]
-  (str name host))
+(defn supervisor-id [{:keys [host name port]}]
+  "id for referencing a particular supervisor server"
+  (str host "-" port "-" name))
 
-(def clients
-  (into {}
-    (for [entry (:hosts config)]
-      [(id-for entry) (client entry)])))
+(def supervisor-clients
+  ;; TODO: push down, this should probably be the
+  ;; normal serverside representation of a supervisor
+  (for [supervisor (:hosts config)]
+    (assoc supervisor
+      :client (client supervisor)
+      :id (supervisor-id supervisor))))
 
-(defn get-supervisors []
-  "Fetch information about all supervisors in the config...
-   now with concurrency!"
+(defn get-supervisors [supervisors]
   (map deref
-    (for [{:keys [host name port] :as entry} (:hosts config)]
+    (for [{:keys [client host name port]} supervisors]
       (future
-        (let [client (get clients (id-for entry))]
-          (merge {:host host
-                  :port port
-                  :name name}
-                 (get-supervisord-info client)))))))
+        (merge {:host host :port port :name name}
+               (get-supervisord-info client))))))
 
-(defresource supervisors-resource []
-  :available-media-types ["application/json" "application/edn" "application/cljson"]
-  :allowed-methods [:get]
-  :handle-ok
-    (fn [r]
-      (let [media-type (get-in r [:representation :media-type])]
-        (match [media-type]
-          ["application/json"] (json/write-str (supervisors))
-          ["application/edn"] (pr-str (supervisors))
-          ["application/cljson"] (clj->cljson (supervisors))
-          :else nil))))
+(defn gen-supervisors-resource [supervisors]
+  (resource
+    :available-media-types ["application/json" "application/edn" "application/cljson"]
+    :allowed-methods [:get]
+    :exists? (fn [_] (pos? (count supervisors)))
+    :handle-ok
+      (fn [r]
+        (let [media-type (get-in r [:representation :media-type])]
+          (match [media-type]
+            ["application/json"]   (json/write-str (get-supervisors supervisors))
+            ["application/edn"]    (pr-str         (get-supervisors supervisors))
+            ["application/cljson"] (clj->cljson    (get-supervisors supervisors))
+            :else nil)))))
 
 (defroutes api-routes
-  (ANY "/supervisors" [] (supervisors-resource)))
-
+  (ANY "/supervisors" []
+    (gen-supervisors-resource supervisor-clients)))
