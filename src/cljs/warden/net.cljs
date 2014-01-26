@@ -1,8 +1,7 @@
 (ns warden.net
-  (:require [om.core :as om :include-macros true]
-            [cljs-http.client :as http]
+  (:require [cljs-http.client :as http]
             [tailrecursion.cljson :refer [cljson->clj]]
-            [cljs.core.async :refer [chan >! <! timeout]])
+            [cljs.core.async :refer [>! <! timeout]])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
 (defn parse [response]
@@ -15,11 +14,3 @@
     (>! ch response)
     (<! (timeout wait))
     (recur enabled (<! (http/get url)))))
-
-(defn sync-state! [ch owner ks]
-  "Keep cursor synced with http responses from channel"
-  (go-loop [response (<! ch)]
-    (when response
-      (let [new-state (parse response)]
-        (om/update! (om/get-props owner) assoc-in ks new-state))
-      (recur (<! ch)))))

@@ -1,10 +1,11 @@
 (ns warden.components.core
-  (:require [warden.net :refer (poll! sync-state!)]
+  (:require [warden.net :refer (poll! parse)]
             [warden.components.supervisors :refer (supervisors)]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [alandipert.storage-atom :refer (local-storage)]
-            [cljs.core.async :refer (chan)]))
+            [cljs.core.async :refer (chan <!)])
+  (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
 (defn header-menu [state owner]
   (om/component
@@ -24,7 +25,11 @@
     (will-mount [this]
       (let [ch (om/get-state owner :api-chan)]
         (poll! "/api/supervisors" 2500 ch)
-        (sync-state! ch owner [:supervisors])))
+        (go-loop [response (<! ch)]
+          (when response
+            (let [new-state (parse response)]
+              (om/update! (om/get-props owner) assoc-in [:supervisors] new-state))
+            (recur (<! ch))))))
 
     om/IRender
     (render [this]
