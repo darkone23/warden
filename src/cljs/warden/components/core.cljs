@@ -16,6 +16,13 @@
 (defn app [state owner]
   "App as a function of application state"
   (reify
+    om/IRender
+    (render [this]
+      (dom/div #js {:className "main pure-g-r"}
+        (om/build header-menu state)
+        (om/build supervisors state
+          {:init-state (om/get-state owner)})))
+
     om/IInitState
     (init-state [this]
       {:config (local-storage (atom {:showing #{}}) :config)
@@ -28,12 +35,5 @@
         (go-loop [response (<! ch)]
           (when response
             (let [new-state (parse response)]
-              (om/update! (om/get-props owner) assoc-in [:supervisors] new-state))
-            (recur (<! ch))))))
-
-    om/IRender
-    (render [this]
-      (dom/div #js {:className "main pure-g-r"}
-        (om/build header-menu state)
-        (om/build supervisors state
-          {:init-state (om/get-state owner)})))))
+              (om/update! state assoc-in [:supervisors] new-state))
+            (recur (<! ch))))))))

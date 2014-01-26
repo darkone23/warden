@@ -3,7 +3,8 @@
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer (chan <! put!)])
-  (:require-macros [cljs.core.async.macros :refer [go-loop]]))
+  (:require-macros [cljs.core.async.macros :refer (go-loop)]
+                   [cljs.core.match.macros :refer (match)]))
 
 ;; helper fns for working with supervisors
 (defn supervisor-id [{:keys [host name port]}]
@@ -56,6 +57,13 @@
   "Individual supervisor ok|err component
    Owns core.async channel for communicating with sub-components"
   (reify
+    om/IRenderState
+    (render-state [this s]
+      (if (get-in state [:state :fault-string])
+        (supervisor-err state)
+        (om/build supervisor-ok state
+          {:init-state s})))
+
     om/IInitState
     (init-state [this] {:super-chan (chan 1)})
 
@@ -70,14 +78,7 @@
                 (swap! config update-in [:showing] disj id)
                 (swap! config update-in [:showing] conj id))
               (om/transact! state identity)))
-          (recur (<! ch)))))
-
-    om/IRenderState
-    (render-state [this s]
-      (if (get-in state [:state :fault-string])
-        (supervisor-err state)
-        (om/build supervisor-ok state
-          {:init-state s})))))
+          (recur (<! ch)))))))
 
 (defn supervisors [state owner]
   "Collection of supervisor servers"
