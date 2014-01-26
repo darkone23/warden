@@ -13,23 +13,37 @@
      (dom/span #js {:className "description pure-u"} description)
      (dom/span #js {:className "state pure-u"} statename))))
 
-(defn supervisor-id [{:keys [host name port]}] (str host name port))
-(defn showing? [config super] (get (:showing @config) (supervisor-id super)))
+;; helper fns for working with supervisors
+(defn supervisor-id [{:keys [host name port]}]
+  (str host name port))
+
+(defn healthy? [{:keys [processes]}]
+  (let [acceptable-states #{"RUNNING" "EXITED"}]
+    (every? (comp acceptable-states :statename) processes)))
+
+(defn showing? [config super]
+  (get (:showing @config) (supervisor-id super)))
 
 (defn supervisor-ok [{:keys [url state-name description processes] :as super} owner]
   (reify
     om/IRenderState
     (render-state [this {:keys [super-chan config]}]
-      (let [show-class (if (showing? config super) "opened" "closed")]
-        (dom/section #js {:className "supervisor pure-u-1"}
+      (let [health (healthy? super)
+            health-class (if health "healthy" "unhealthy")
+            health-icon-class (if health "fa-eye" "fa-exclamation-triangle")
+            showing (showing? config super)
+            showing-class (if showing "opened" "closed")
+            showing-icon-class (if showing "fa-chevron-up" "fa-chevron-down")]
+        (dom/section #js {:className (str "supervisor pure-u-1 " health-class " " showing-class)}
           (dom/header #js {:className "pure-g-r"
                            :onClick #(put! super-chan [::toggle-showing @super])}
             (dom/span #js {:className "description pure-u-5-6"}
+              (dom/i #js {:className (str "fa control " showing-icon-class)})
               (dom/a #js {:href url :target "_blank"} description))
-            (dom/span #js {:className (str "state " state-name " pure-u-1-6 pure-hidden-phone")}
+            (dom/span #js {:className (str "state " state-name " pure-u-1-6")}
               (dom/span #js {:className "process-count"} (count processes))
-              (dom/i #js {:className "fa fa-eye"})))
-          (apply dom/ul #js {:className (str "process " show-class)}
+              (dom/i #js {:className (str "fa " health-icon-class)})))
+          (apply dom/ul #js {:className "process"}
             (om/build-all process processes)))))))
 
 (defn supervisor-err [{:keys [host name port] {err :fault-string} :state}]
@@ -37,7 +51,7 @@
     (dom/section #js {:className "supervisor error pure-u-1"}
       (dom/span #js {:className "message pure-u"} message)
       (dom/code #js {:className "err pure-u"} err)
-      (dom/i #js {:className "fa fa-exclamation-triangle fa-2x"}))))
+      (dom/i #js {:className "fa fa-eye-slash fa-2x"}))))
 
 (defn supervisor [state owner]
   (reify
@@ -80,7 +94,7 @@
   (om/component
    (dom/header #js {:className "pure-menu pure-menu-fixed pure-menu-horizontal"}
     (dom/h2 #js {:className "pure-u"} (:name state))
-    (dom/h3 #js {:className "description pure-u pure-hidden-phone"} (:description state)))))
+    (dom/h3 #js {:className "description pure-u"} (:description state)))))
 
 (defn app [state owner]
   "App as a function of application state"

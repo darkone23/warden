@@ -7,14 +7,19 @@ html {
 }
 
 .main {
-    background-color: hsla(40, 85%, 85%, 0.5);
+    background-color: hsla(40, 85%, 85%, 0.4);
     overflow: auto;
 }
 
 * {
+    /* simplify box model */
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
+    /* disable accidental highlighting */
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 body,
@@ -60,8 +65,17 @@ a:hover {
 }
 
 .supervisor header {
-    font-size: 1.12em;
+    font-size: 1.15em;
     cursor: pointer;
+}
+
+.supervisor header i.control {
+    font-size: 1.15em;
+}
+
+.supervisor header .description a {
+    margin-left: 5px;
+    padding-left: 5px;
 }
 
 .supervisor header .process-count {
@@ -73,14 +87,22 @@ a:hover {
     font-size: 1.25em;
 }
 
+.unhealthy .state i {
+    color: hsl(0, 94%, 68%);
+}
+
+.healthy .state i {
+    color: hsl(150, 70%, 40%);
+}
+
 .supervisor .process {
     padding: 5px 0;
 }
 
-.supervisor .process.opened {
+.supervisor.opened .process {
     display: block;
 }
-.supervisor .process.closed {
+.supervisor.closed .process {
     display: none;
 }
 
@@ -131,6 +153,10 @@ a:hover {
     background-color: hsl(0, 94%, 68%);
 }
 
+
+.supervisor.error {
+    color: hsl(0, 0%, 50%);
+}
 
 .supervisor.error code.err {
     padding-left: 10px;
