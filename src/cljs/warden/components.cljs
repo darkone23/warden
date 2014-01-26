@@ -1,8 +1,10 @@
 (ns warden.components
   (:require [om.core :as om :include-macros true]
+            [alandipert.storage-atom :refer [local-storage]]
             [om.dom :as dom :include-macros true]
-            [cljs.core.async :refer (chan)]
-            [warden.net :refer (poll! sync-state!)]))
+            [cljs.core.async :refer (chan sliding-buffer >! put!)]
+            [warden.net :refer (poll! sync-state!)])
+  (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
 (defn process [{:keys [name statename description]} owner]
   (om/component
@@ -11,23 +13,23 @@
      (dom/span #js {:className "description pure-u"} description)
      (dom/span #js {:className "state pure-u"} statename))))
 
-(defn supervisor-ok [{:keys [host port name processes state] :as s} owner]
-  (let [public-url (str "http://" host ":" port)
-        description (str name "@" host)
-        state (:statename state)
-        showing? true
-        show-class (if showing? "showing" "hidden")]
+(defn supervisor-ok [{:keys [id url state-name description processes] :as super} owner]
+  (reify
+    om/IRenderState
+    (render-state [this {:keys [super-chan config]}]
+      (let [show-class (if showing? "showing" "hidden")]
     (dom/section #js {:className "supervisor pure-u-1"}
-      (dom/header #js {:className "pure-g-r"}
+      (dom/header #js {:className "pure-g-r"
+                       :onClick #(put! super-chan [::toggle-showing @super])}
         (dom/span #js {:className "description pure-u-5-6"}
-          (dom/a #js {:href public-url :target "_blank"} description))
-        (dom/span #js {:className (str "state " state " pure-u-1-6 pure-hidden-phone")}
+          (dom/a #js {:href url :target "_blank"} description))
+        (dom/span #js {:className (str "state " state-name " pure-u-1-6 pure-hidden-phone")}
           (dom/span #js {:className "process-count"} (count processes))
           (dom/i #js {:className "fa fa-eye"})))
       (apply dom/ul #js {:className (str "process " show-class)}
-        (om/build-all process processes)))))
+        (om/build-all process processes)))))))
 
-(defn supervisor-err [{:keys [host name port] {err :fault-string} :state} owner]
+(defn supervisor-err [{:keys [host name port] {err :fault-string} :state}]
   (let [message (str "Could not connect to " name " at " host ":"  port)]
     (dom/section #js {:className "supervisor error pure-u-1"}
       (dom/span #js {:className "message pure-u"} message)
@@ -35,15 +37,37 @@
       (dom/i #js {:className "fa fa-exclamation-triangle fa-2x"}))))
 
 (defn supervisor [state owner]
-  (om/component
-   (if (get-in state [:state :fault-string])
-     (supervisor-err state owner)
-     (supervisor-ok state owner))))
+  (reify
+    om/IInitState
+    (init-state [this] {:super-chan (chan 1)})
+
+    om/IWillMount
+    (will-mount [this]
+      (let [ch (om/get-state owner :super-chan)]
+        (go-loop [[k v] (<! ch)]
+          (when (= k ::toggle-showing)
+            (js/console.dir v))
+          (recur (<! ch)))))
+
+    om/IRenderState
+    (render-state [this s]
+      (if (get-in state [:state :fault-string])
+        (supervisor-err state)
+        (om/build supervisor-ok state
+           {:init-state s})))))
 
 (defn supervisors [state owner]
   (om/component
-   (apply dom/div #js {:className "supervisors pure-u-1"}
-     (om/build-all supervisor (:supervisors state)))))
+    (apply dom/div #js {:className "supervisors pure-u-1"}
+      (for [super (:supervisors state)]
+        (om/build supervisor super
+          {:init-state (om/get-state owner)
+           :fn (fn [{:keys [host port name state] :as super}]
+                 (merge super
+                   {:id (str host port name)
+                    :url (str "http://" host ":" port)
+                    :state-name (:statename state)
+                    :description (str name "@" host)}))})))))
 
 (defn header-menu [state owner]
   (om/component
@@ -56,11 +80,12 @@
   (reify
     om/IInitState
     (init-state [this]
-      {:chans {:supervisors (chan 1)}})
+      {:config (local-storage (atom {:showing #{}}) :config)
+       :api-chan (chan 1)})
 
     om/IWillMount
     (will-mount [this]
-      (let [ch (om/get-state owner [:chans :supervisors])]
+      (let [ch (om/get-state owner :api-chan)]
         (poll! "/api/supervisors" 2500 ch)
         (sync-state! ch owner [:supervisors])))
 
@@ -68,4 +93,5 @@
     (render [this]
       (dom/div #js {:className "main pure-g-r"}
         (om/build header-menu state)
-        (om/build supervisors state)))))
+        (om/build supervisors state
+          {:init-state (om/get-state owner)})))))

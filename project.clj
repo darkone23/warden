@@ -12,7 +12,7 @@
                  [tailrecursion/cljson "1.0.6"]
                  [alandipert/storage-atom "1.1.2"]
                  [prismatic/schema "0.2.0"]
-                 [om "0.2.3"]
+                 [om "0.3.0"]
                  [cljs-http "0.1.4"]]
 
   :source-paths ["src/clj" "target/cljx-generated/clj"]
