@@ -135,6 +135,28 @@ a:hover {
     color: #3D3D3D;
 }
 
+.messages .error {
+    color: #c7254e;
+    background-color: #f9f2f4;
+}
+.messages .message {
+    color: #1d9d74;
+    background-color: #f1f9f7;
+}
+
+.messages {
+    position: relative;
+}
+
+.messages span {
+    position: absolute;
+    right: 0px;
+    padding: 5px;
+    border-radius: 5px;
+    font-size: 1em;
+}
+
+
 .supervisor .process .controls i {
     margin-left: 10px;
 }

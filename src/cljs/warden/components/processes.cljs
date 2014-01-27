@@ -2,9 +2,16 @@
   (:require [warden.net :refer (cljson-post)]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
+            [tailrecursion.cljson :refer [cljson->clj]]
             [cljs.core.async :refer (chan put!)])
   (:require-macros [cljs.core.async.macros :refer (go-loop)]
                    [cljs.core.match.macros :refer (match)]))
+
+(defn handle-action! [ch response]
+  (if-let [err (-> response
+                   (update-in [:body] cljson->clj)
+                   (get-in [:body :fault-string]))]
+    (put! ch [:error err])))
 
 (defn process [{:keys [name statename description] :as p} owner]
   "Single process in a supervisor"
@@ -30,12 +37,19 @@
       (let [process-api (str (om/get-state owner :supervisor-api) "/processes/" name)
             start-api (str process-api "/action/start")
             stop-api (str process-api "/action/stop")
-            ch (om/get-state owner :action-chan)]
-        (go-loop [[k _] (<! ch)]
+            super-chan (om/get-state owner :super-chan)
+            action-chan (om/get-state owner :action-chan)]
+        (go-loop [[k v] (<! action-chan)]
           (match [k]
-            [::start] (cljson-post start-api)
-            [::stop] (cljson-post stop-api))
-          (recur (<! ch)))))))
+            [::start]
+              (let [message (str "sent: start " (:name v))]
+                (put! super-chan [:message message])
+                (handle-action! super-chan (<! (cljson-post start-api))))
+            [::stop]
+              (let [message (str "sent: stop " (:name v))]
+                (put! super-chan [:message message])
+                (handle-action! super-chan (<! (cljson-post stop-api)))))
+          (recur (<! action-chan)))))))
 
 (defn processes [processes owner]
   "Collection of supervised processes"
