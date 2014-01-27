@@ -12,6 +12,10 @@
   "HTTP GET with cljson headers"
   (http/get url (cljson-request req)))
 
+(defn cljson-post [url & [req]]
+  "HTTP POST with cljson headers"
+  (http/post url (cljson-request req)))
+
 (defn parse [{body :body}]
   (vec (cljson->clj body)))
 

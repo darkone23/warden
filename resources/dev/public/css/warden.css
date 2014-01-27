@@ -69,14 +69,14 @@ a:hover {
     cursor: pointer;
 }
 
-.supervisor header .control {
+.supervisor header .controls {
     float: right;
     font-size: 1.25em;
     position: relative;
     top: 5px;
 }
 
-.supervisor header .control i {
+.supervisor header .controls i {
     float: right;
 }
 
@@ -122,6 +122,21 @@ a:hover {
 .supervisor .process .description {
     line-height: 2em;
     font-size: 0.9em;
+}
+
+.supervisor .process .controls {
+    float: right;
+    line-height: 1em;
+    font-size: 1.5em;
+    cursor: pointer;
+}
+
+.controls {
+    color: #3D3D3D;
+}
+
+.supervisor .process .controls i {
+    margin-left: 10px;
 }
 
 .supervisor .process .state {

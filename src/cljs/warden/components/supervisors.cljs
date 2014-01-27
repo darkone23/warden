@@ -42,7 +42,7 @@
                  (dom/i #js {:className (str "fa " health-icon-class)}))
                (dom/span #js {:className "description"}
                  (dom/a #js {:href url :target "_blank"} description)))
-             (dom/span #js {:className "control pure-u-1-6"}
+             (dom/span #js {:className "controls pure-u-1-6"}
                (dom/i #js {:className (str "fa " showing-icon-class)})))
           (om/build processes procs
             {:init-state (om/get-state owner)}))))))
@@ -84,13 +84,16 @@
             (om/transact! state identity))
           (recur (<! ch)))))))
 
+(defn supervisor-api [{:keys [host name]}]
+  (str "/api/supervisors/" host "/" name))
+
 (defn supervisors [state owner]
   "Collection of supervisor servers"
   (om/component
     (apply dom/div #js {:className "supervisors pure-u-1"}
       (for [super (:supervisors state)]
         (om/build supervisor super
-          {:init-state (om/get-state owner)
+          {:init-state (assoc (om/get-state owner) :supervisor-api (supervisor-api super))
            :react-key (supervisor-id super)
            :fn (fn [{:keys [host port name state] :as super}]
                  (merge super
