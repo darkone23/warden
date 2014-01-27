@@ -1,11 +1,14 @@
 ## Before 0.1.0:
 
-- Render errors
+- Render Messages/Errors
   - any api call can result in an error
+  - components should be able to bubble up errors/messages
+
 - Process control
-  - start   [all]
-  - stop    [all]
-  - restart [all]
+  - start-all
+  - stop-all
+  - restart
+  - restart-all
   - clear log
 - Better test coverage!
   - Schemas for api endpoints
