@@ -12,10 +12,12 @@
   "Generates an api client out of a config entry"
   (let [url (get-url supervisor)]
     (fn [& args]
-      (try (apply xml-rpc/call url args)
-           (catch Exception e
-             {:fault-code -1
-              :fault-string (.getMessage e)})))))
+      (try
+        (let [{:keys [fault-code fault-string] :as r} (apply xml-rpc/call url args)]
+          (if-not fault-code r {:fault-code fault-code :fault-string fault-string}))
+        (catch Exception e
+          {:fault-code -1
+           :fault-string (.getMessage e)})))))
 
 (s/defn get-process-info :- (maybe-err SupervisorProcess)
   [client name]

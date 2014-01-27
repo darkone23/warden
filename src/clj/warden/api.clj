@@ -1,7 +1,7 @@
 (ns warden.api
   (:use compojure.core)
   (:require [warden.config :refer (config)]
-            [warden.supervisord :refer (client get-supervisord-info)]
+            [warden.supervisord :refer (client get-supervisord-info api)]
             [liberator.core :refer (defresource resource)]
             [clojure.data.json :as json]
             [tailrecursion.cljson :refer (clj->cljson)]
@@ -37,6 +37,9 @@
         (merge {:host host :port port :name name}
                (get-supervisord-info client))))))
 
+
+;; Liberator Resource Definitions
+
 (defn gen-supervisors-resource [supervisors]
   "Collection of supervisors resource"
   (resource
@@ -71,12 +74,49 @@
             ["application/cljson"]
               (clj->cljson (-> supervisor list get-supervisors first)))))))
 
+(defn supervisors-list []
+  (gen-supervisors-resource supervisor-clients))
+
+(defn supervisors-list-by-host [host]
+  (gen-supervisors-resource
+    (filter-key= {:host host} supervisor-clients)))
+
+(defn supervisor-by-id [host name]
+  (gen-supervisor-resource
+    (find-key= {:host host :name name} supervisor-clients)))
+
+(defn supervisor-process-list [host name])
+(defn supervisor-process-detail [host name process])
+
+(defn supervisor-process-action [host name process action]
+  (let [action (get api (keyword action))
+        {client :client} (find-key= {:host host :name name} supervisor-clients)]
+    (if (and action client)
+      (resource
+        :allowed-methods [:post]
+        :available-media-types ["application/json" "application/edn" "application/cljson"]
+        :post! (fn [_] {::result (action client process)})
+        :handle-created
+          (fn [r]
+            (let [result (::result r)
+                  media-type (get-in r [:representation :media-type])]
+              (match [media-type]
+                ["application/json"]   (json/write-str result)
+                ["application/edn"]    (pr-str result)
+                ["application/cljson"] (clj->cljson result))))))))
+
+;; Compojure Route Definitions
+
 (defroutes api-routes
   (ANY "/supervisors" []
-    (gen-supervisors-resource supervisor-clients))
+    (supervisors-list))
   (ANY "/supervisors/:host" [host]
-    (gen-supervisors-resource
-      (filter-key= {:host host} supervisor-clients)))
+    (supervisors-list-by-host host))
   (ANY "/supervisors/:host/:name" [host name]
-    (gen-supervisor-resource
-      (find-key= {:host host :name name} supervisor-clients))))
+    (supervisor-by-id host name))
+  (ANY "/supervisors/:host/:name/processes" [host name]
+    (supervisor-process-list [host name]))
+  (ANY "/supervisors/:host/:name/processes/:process" [host name process]
+    (supervisor-process-detail host name process))
+  (ANY "/supervisors/:host/:name/processes/:process/action/:action" [host name process action]
+    (supervisor-process-action host name process action)))
