@@ -1,7 +1,6 @@
 ## Before 0.1.0:
 
 - Render errors
-  - unreachable servers
   - any api call can result in an error
 - Process control
   - start   [all]
@@ -25,5 +24,4 @@
 - in memory caching (reduce api requests for concurrent users)
 - public api
 - auth
-- optional supervisord discovery
-  - serf?
+- api for service discovery/live configuration

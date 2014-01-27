@@ -19,9 +19,8 @@
 (defn filter-key= [comparison ms]
   (filter #(key= comparison %) ms))
 
-(defn safe-parse-int [s]
-  (try (Integer/parseInt s)
-    (catch Exception e)))
+(defn find-key= [comparison ms]
+  (first (filter-key= comparison ms)))
 
 (def supervisor-clients
   ;; TODO: push down, this should probably be the
@@ -48,25 +47,29 @@
       (fn [r]
         (let [media-type (get-in r [:representation :media-type])]
           (match [media-type]
-            ["application/json"]   (json/write-str (get-supervisors supervisors))
-            ["application/edn"]    (pr-str         (get-supervisors supervisors))
-            ["application/cljson"] (clj->cljson    (get-supervisors supervisors))
-            :else nil)))))
+            ["application/json"]
+              (json/write-str (get-supervisors supervisors))
+            ["application/edn"]
+              (pr-str (get-supervisors supervisors))
+            ["application/cljson"]
+              (clj->cljson (get-supervisors supervisors)))))))
 
-(defn gen-supervisor-resource [supervisors]
+(defn gen-supervisor-resource [supervisor]
   "Single supervisor resource"
   (resource
     :available-media-types ["application/json" "application/edn" "application/cljson"]
     :allowed-methods [:get]
-    :exists? (fn [_] (= 1 (count supervisors)))
+    :exists? (fn [_] (:client supervisor))
     :handle-ok
       (fn [r]
         (let [media-type (get-in r [:representation :media-type])]
           (match [media-type]
-            ["application/json"]   (json/write-str (first (get-supervisors supervisors)))
-            ["application/edn"]    (pr-str         (first (get-supervisors supervisors)))
-            ["application/cljson"] (clj->cljson    (first (get-supervisors supervisors)))
-            :else nil)))))
+            ["application/json"]
+              (json/write-str (-> supervisor list get-supervisors first))
+            ["application/edn"]
+              (pr-str (-> supervisor list get-supervisors first))
+            ["application/cljson"]
+              (clj->cljson (-> supervisor list get-supervisors first)))))))
 
 (defroutes api-routes
   (ANY "/supervisors" []
@@ -74,6 +77,6 @@
   (ANY "/supervisors/:host" [host]
     (gen-supervisors-resource
       (filter-key= {:host host} supervisor-clients)))
-  (ANY "/supervisors/:host/:port" [host port]
+  (ANY "/supervisors/:host/:name" [host name]
     (gen-supervisor-resource
-      (filter-key= {:host host :port (safe-parse-int port)} supervisor-clients))))
+      (find-key= {:host host :name name} supervisor-clients))))
