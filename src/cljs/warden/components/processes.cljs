@@ -6,9 +6,9 @@
   "Single process in a supervisor"
   (om/component
     (dom/li #js {:className (str statename " process pure-u-1")}
+      (dom/span #js {:className "state pure-u"} statename)
       (dom/span #js {:className "name pure-u"} name)
-      (dom/span #js {:className "description pure-u"} description)
-      (dom/span #js {:className "state pure-u"} statename))))
+      (dom/span #js {:className "description pure-u"} description))))
 
 (defn processes [processes owner]
   "Collection of supervised processes"

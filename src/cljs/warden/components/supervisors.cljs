@@ -36,12 +36,14 @@
         (dom/section #js {:className (str "supervisor pure-u-1 " health-class " " showing-class)}
           (dom/header #js {:className "pure-g-r"
                            :onClick #(put! super-chan [::toggle-showing @super])}
-            (dom/span #js {:className "description pure-u-5-6"}
-              (dom/i #js {:className (str "fa control " showing-icon-class)})
-              (dom/a #js {:href url :target "_blank"} description))
-            (dom/span #js {:className (str "state " state-name " pure-u-1-6")}
-              (dom/span #js {:className "process-count"} (count procs))
-              (dom/i #js {:className (str "fa " health-icon-class)})))
+             (dom/span #js {:className "pure-u-5-6"}
+               (dom/span #js {:className (str "state " state-name)}
+                 (dom/span #js {:className "process-count"} (count procs))
+                 (dom/i #js {:className (str "fa " health-icon-class)}))
+               (dom/span #js {:className "description"}
+                 (dom/a #js {:href url :target "_blank"} description)))
+             (dom/span #js {:className "control pure-u-1-6"}
+               (dom/i #js {:className (str "fa " showing-icon-class)})))
           (om/build processes procs
             {:init-state (om/get-state owner)}))))))
 

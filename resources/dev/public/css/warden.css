@@ -60,7 +60,7 @@ a:hover {
 }
 
 .supervisor {
-    padding: 10px 0;
+    padding: 10px 0 0 0;
     border-bottom: 2px solid #ccc;
 }
 
@@ -69,8 +69,15 @@ a:hover {
     cursor: pointer;
 }
 
-.supervisor header i.control {
-    font-size: 1.15em;
+.supervisor header .control {
+    float: right;
+    font-size: 1.25em;
+    position: relative;
+    top: 5px;
+}
+
+.supervisor header .control i {
+    float: right;
 }
 
 .supervisor header .description a {
@@ -118,7 +125,8 @@ a:hover {
 }
 
 .supervisor .process .state {
-    float: right;
+    line-height: 1.2em;
+    margin-right: 8px;
     padding: 0.3em;
     border-radius: 0.2em;
 }
