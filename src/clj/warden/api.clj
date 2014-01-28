@@ -3,6 +3,7 @@
   (:require [warden.config :refer (config)]
             [warden.supervisord :refer (client get-supervisord-info api)]
             [liberator.core :refer (defresource resource)]
+            [liberator.representation :refer (render-map-generic render-seq-generic)]
             [clojure.data.json :as json]
             [tailrecursion.cljson :refer (clj->cljson)]
             [clojure.core.match :refer (match)]))
@@ -39,40 +40,34 @@
 
 
 ;; Liberator Resource Definitions
+(defmethod render-map-generic
+  "application/cljson"
+  [m ctx] (clj->cljson m))
+(defmethod render-seq-generic
+  "application/cljson"
+  [s ctx] (clj->cljson s))
 
 (defn gen-supervisors-resource [supervisors]
   "Collection of supervisors resource"
   (resource
     :available-media-types ["application/json" "application/edn" "application/cljson"]
     :allowed-methods [:get]
-    :exists? (fn [_] (pos? (count supervisors)))
-    :handle-ok
-      (fn [r]
-        (let [media-type (get-in r [:representation :media-type])]
-          (match [media-type]
-            ["application/json"]
-              (json/write-str (get-supervisors supervisors))
-            ["application/edn"]
-              (pr-str (get-supervisors supervisors))
-            ["application/cljson"]
-              (clj->cljson (get-supervisors supervisors)))))))
+    :exists?
+      (fn [_]
+        (if-let [s (get-supervisors supervisors)]
+          {::supervisors s}))
+    :handle-ok ::supervisors))
 
 (defn gen-supervisor-resource [supervisor]
   "Single supervisor resource"
   (resource
     :available-media-types ["application/json" "application/edn" "application/cljson"]
     :allowed-methods [:get]
-    :exists? (fn [_] (:client supervisor))
-    :handle-ok
-      (fn [r]
-        (let [media-type (get-in r [:representation :media-type])]
-          (match [media-type]
-            ["application/json"]
-              (json/write-str (-> supervisor list get-supervisors first))
-            ["application/edn"]
-              (pr-str (-> supervisor list get-supervisors first))
-            ["application/cljson"]
-              (clj->cljson (-> supervisor list get-supervisors first)))))))
+    :exists?
+      (fn [_]
+        (if-let [s (-> supervisor list get-supervisors first)]
+          {::supervisor s}))
+    :handle-ok ::supervisor))
 
 (defn supervisors-list []
   (gen-supervisors-resource supervisor-clients))
@@ -96,14 +91,7 @@
         :allowed-methods [:post]
         :available-media-types ["application/json" "application/edn" "application/cljson"]
         :post! (fn [_] {::result (action client process)})
-        :handle-created
-          (fn [r]
-            (let [result (::result r)
-                  media-type (get-in r [:representation :media-type])]
-              (match [media-type]
-                ["application/json"]   (json/write-str result)
-                ["application/edn"]    (pr-str result)
-                ["application/cljson"] (clj->cljson result))))))))
+        :handle-created ::result))))
 
 ;; Compojure Route Definitions
 
