@@ -1,7 +1,7 @@
 (ns warden.supervisord
-  (:require [necessary-evil.core :as xml-rpc]
+  (:require [warden.schemas :refer (SupervisorProcess SupervisorProcessStatus SupervisordState SupervisordInfo maybe-err)]
+            [necessary-evil.core :as xml-rpc]
             [schema.core :as s]
-            [warden.schemas :refer (SupervisorProcess SupervisorProcessStatus SupervisordState SupervisordInfo maybe-err)]
             [clojure.core.async :refer (chan timeout close! alts! go-loop >!)]))
 
 (defn xml-url [host port] (str "http://" host ":" port "/RPC2"))
@@ -165,3 +165,18 @@
    :read-stderr read-full-process-stderr
    :tail-stdout tail-process-stdout
    :tail-stderr tail-process-stderr})
+
+(defn supervisor-clients [specs]
+  (for [supervisor specs]
+    (assoc supervisor
+      :client (client supervisor))))
+
+(defn get-supervisor [{:keys [client host name port]}]
+  (when client
+    (merge {:host host :name name :port port} ;; user provided information
+           (get-supervisord-info client))))        ;; + supervisor info
+
+(defn get-supervisors [supervisors]
+  (map deref
+    (for [{c :client} supervisors]
+      (future (get-supervisor c)))))

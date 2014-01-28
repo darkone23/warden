@@ -1,10 +1,9 @@
 (ns warden.api
   (:use compojure.core)
   (:require [warden.config :refer (config)]
-            [warden.supervisord :refer (client get-supervisord-info api)]
+            [warden.supervisord :as super]
             [liberator.core :refer (defresource resource)]
             [liberator.representation :refer (render-map-generic render-seq-generic)]
-            [clojure.data.json :as json]
             [tailrecursion.cljson :refer (clj->cljson)]
             [clojure.core.match :refer (match)]))
 
@@ -15,96 +14,65 @@
 
 (defn key= [x y]
   "Checks that every key in x is equal in y"
-  (every? true? (for [[k v] x] (= v (get y k)))))
-
-(defn filter-key= [comparison ms]
-  (filter #(key= comparison %) ms))
-
-(defn find-key= [comparison ms]
-  (first (filter-key= comparison ms)))
-
-(def supervisor-clients
-  ;; TODO: push down, this should probably be the
-  ;; normal serverside representation of a supervisor
-  (for [supervisor (:hosts config)]
-    (assoc supervisor
-      :client (client supervisor)
-      :id (supervisor-id supervisor))))
-
-(defn get-supervisors [supervisors]
-  (map deref
-    (for [{:keys [client host name port]} supervisors]
-      (future
-        (merge {:host host :port port :name name}
-               (get-supervisord-info client))))))
-
+  (if (every? true? (for [[k v] x] (= v (get y k)))) y))
 
 ;; Liberator Resource Definitions
 (defmethod render-map-generic
   "application/cljson"
   [m ctx] (clj->cljson m))
+
 (defmethod render-seq-generic
   "application/cljson"
   [s ctx] (clj->cljson s))
 
-(defn gen-supervisors-resource [supervisors]
-  "Collection of supervisors resource"
-  (resource
-    :available-media-types ["application/json" "application/edn" "application/cljson"]
-    :allowed-methods [:get]
-    :exists?
-      (fn [_]
-        (if-let [s (get-supervisors supervisors)]
-          {::supervisors s}))
-    :handle-ok ::supervisors))
+(def supervisor-clients
+  (super/supervisor-clients (:hosts config)))
 
-(defn gen-supervisor-resource [supervisor]
-  "Single supervisor resource"
-  (resource
-    :available-media-types ["application/json" "application/edn" "application/cljson"]
-    :allowed-methods [:get]
-    :exists?
-      (fn [_]
-        (if-let [s (-> supervisor list get-supervisors first)]
-          {::supervisor s}))
-    :handle-ok ::supervisor))
+(defresource supervisors-all []
+  :available-media-types ["application/json""application/edn" "application/cljson"]
+  :allowed-methods [:get]
+  :handle-ok (fn [ctx] (super/get-supervisors supervisor-clients)))
 
-(defn supervisors-list []
-  (gen-supervisors-resource supervisor-clients))
+(defresource supervisors-group [host]
+  :available-media-types ["application/json" "application/edn" "application/cljson"]
+  :allowed-methods [:get]
+  :exists? (fn [ctx]
+             (let [cs (filter #(key= {:host host} %) supervisor-clients)]
+               (if-let [s (super/get-supervisors cs)] {::supervisors s})))
+  :handle-ok ::supervisors)
 
-(defn supervisors-list-by-host [host]
-  (gen-supervisors-resource
-    (filter-key= {:host host} supervisor-clients)))
+(defresource supervisor [host name]
+  :available-media-types ["application/json""application/edn" "application/cljson"]
+  :allowed-methods [:get]
+  :exists? (fn [ctx]
+             (let [c (some #(key= {:host host :name name} %) supervisor-clients)]
+               (if-let [s (super/get-supervisor c)] {::supervisor s})))
+  :handle-ok ::supervisor)
 
-(defn supervisor-by-id [host name]
-  (gen-supervisor-resource
-    (find-key= {:host host :name name} supervisor-clients)))
-
-(defn supervisor-process-list [host name])
-(defn supervisor-process-detail [host name process])
+(defn supervisor-processes [host name])
+(defn supervisor-process [host name process])
 
 (defn supervisor-process-action [host name process action]
-  (let [action (get api (keyword action))
-        {client :client} (find-key= {:host host :name name} supervisor-clients)]
-    (if (and action client)
-      (resource
-        :allowed-methods [:post]
-        :available-media-types ["application/json" "application/edn" "application/cljson"]
-        :post! (fn [_] {::result (action client process)})
-        :handle-created ::result))))
+  :allowed-methods [:post]
+  :available-media-types ["application/json" "application/edn" "application/cljson"]
+  :post! (fn [ctx]
+           (let [{c :client} (some #(key= {:host host :name name} %) supervisor-clients)
+                 f (get super/api (keyword action))]
+             (if (and c f) {::result (f c process)})))
+  :handle-created ::result)
 
 ;; Compojure Route Definitions
 
 (defroutes api-routes
   (ANY "/supervisors" []
-    (supervisors-list))
+    (supervisors-all))
   (ANY "/supervisors/:host" [host]
-    (supervisors-list-by-host host))
+    (supervisors-group host))
   (ANY "/supervisors/:host/:name" [host name]
-    (supervisor-by-id host name))
+    (supervisor host name))
   (ANY "/supervisors/:host/:name/processes" [host name]
-    (supervisor-process-list [host name]))
+    (supervisor-processes host name))
   (ANY "/supervisors/:host/:name/processes/:process" [host name process]
-    (supervisor-process-detail host name process))
+    (supervisor-process host name process))
   (ANY "/supervisors/:host/:name/processes/:process/action/:action" [host name process action]
     (supervisor-process-action host name process action)))
