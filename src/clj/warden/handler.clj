@@ -1,7 +1,6 @@
 (ns warden.handler
   (:use compojure.core)
   (:require [warden.api :refer (api-routes)]
-            [liberator.dev :refer (wrap-trace)]
             [ring.util.response :as resp]
             [ring.middleware.gzip :as gzip]
             [compojure.handler :as handler]
@@ -16,6 +15,5 @@
 (def app
   (-> app-routes
       handler/site
-      (wrap-trace :header :ui)
       gzip/wrap-gzip))
 

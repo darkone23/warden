@@ -67,9 +67,8 @@
   :post! (fn [ctx]
            (let [c (:client (some-key= {:host host :name name} supervisor-clients))
                  f (super/api (keyword action))]
-             (println "hi" f c)
-             (if (and c f) {::result (f c process)})))
-  :handle-created ::result)
+             (if (and c f) {::creates {:result (f c process)}})))
+  :handle-created ::creates)
 
 ;; Compojure Route Definitions
 (defroutes api-routes
