@@ -2,7 +2,7 @@
   (:require [warden.schemas :refer (SupervisorProcess SupervisorProcessStatus SupervisordState SupervisordInfo maybe-err)]
             [necessary-evil.core :as xml-rpc]
             [schema.core :as s]
-            [clojure.core.async :refer (chan timeout close! alts! go-loop >! <! <!! thread)]))
+            [clojure.core.async :refer (chan timeout close! alts! go-loop >! thread)]))
 
 (defn xml-url [host port] (str "http://" host ":" port "/RPC2"))
 
@@ -168,7 +168,7 @@
 (defn get-supervisor [{:keys [client host name port]}]
   (when client
     (merge {:host host :name name :port port} ;; user provided information
-           (get-supervisord-info client))))        ;; + supervisor info
+           (get-supervisord-info client))))   ;; + supervisor info
 
 (defn get-supervisors [supervisors]
   (map deref
@@ -179,11 +179,10 @@
   "Start a background process for refreshing
    supervisor information on an interval
    Returns an atom of supervisors"
-  (let [supers (atom {:supervisors (get-supervisors supervisors)})]
+  (let [supers (atom {:supervisors nil})]
     (thread
-     (<!! (timeout interval))
-     (loop []
-      (swap! supers assoc :supervisors (get-supervisors supervisors))
-      (<! (timeout interval))
-      (recur)))
+     (loop [s (get-supervisors supervisors)]
+       (swap! supers assoc :supervisors s)
+       (Thread/sleep interval)
+       (recur (get-supervisors supervisors))))
     supers))
