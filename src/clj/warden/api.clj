@@ -16,6 +16,14 @@
   "Checks that every key in x is equal in y"
   (if (every? true? (for [[k v] x] (= v (get y k)))) y))
 
+(defn filter-key= [m ms]
+  "filters a collection of maps by those that match a minimum keyset"
+  (filter (partial key= m) ms))
+
+(defn some-key= [m ms]
+  "felect by minimum keyset"
+  (some (partial key= m) ms))
+
 ;; Liberator Resource Definitions
 (defmethod render-map-generic
   "application/cljson"
@@ -26,6 +34,7 @@
   [s ctx] (clj->cljson s))
 
 (def supervisor-clients
+  ;; what is this global data doing here????
   (super/supervisor-clients (:hosts config)))
 
 (defresource supervisors-all []
@@ -37,7 +46,7 @@
   :available-media-types ["application/json" "application/edn" "application/cljson"]
   :allowed-methods [:get]
   :exists? (fn [ctx]
-             (let [cs (filter #(key= {:host host} %) supervisor-clients)]
+             (let [cs (filter-key= {:host host} supervisor-clients)]
                (if-let [s (super/get-supervisors cs)] {::supervisors s})))
   :handle-ok ::supervisors)
 
@@ -45,34 +54,40 @@
   :available-media-types ["application/json""application/edn" "application/cljson"]
   :allowed-methods [:get]
   :exists? (fn [ctx]
-             (let [c (some #(key= {:host host :name name} %) supervisor-clients)]
+             (let [c (some-key= {:host host :name name} supervisor-clients)]
                (if-let [s (super/get-supervisor c)] {::supervisor s})))
   :handle-ok ::supervisor)
 
-(defn supervisor-processes [host name])
-(defn supervisor-process [host name process])
+(defresource supervisor-processes [host name])
+(defresource supervisor-process [host name process])
 
-(defn supervisor-process-action [host name process action]
+(defresource supervisor-process-action [host name process action]
   :allowed-methods [:post]
   :available-media-types ["application/json" "application/edn" "application/cljson"]
   :post! (fn [ctx]
-           (let [{c :client} (some #(key= {:host host :name name} %) supervisor-clients)
-                 f (get super/api (keyword action))]
+           (let [c (:client (some-key= {:host host :name name} supervisor-clients))
+                 f (super/api (keyword action))]
+             (println "hi" f c)
              (if (and c f) {::result (f c process)})))
   :handle-created ::result)
 
 ;; Compojure Route Definitions
-
 (defroutes api-routes
+  ;; list of all supervisors
   (ANY "/supervisors" []
     (supervisors-all))
+  ;; list of supervisors on a host
   (ANY "/supervisors/:host" [host]
     (supervisors-group host))
+  ;; a particular supervisor on a host
   (ANY "/supervisors/:host/:name" [host name]
     (supervisor host name))
+  ;; a process list of a supervisor on a host
   (ANY "/supervisors/:host/:name/processes" [host name]
     (supervisor-processes host name))
+  ;; detail about a particular process
   (ANY "/supervisors/:host/:name/processes/:process" [host name process]
     (supervisor-process host name process))
+  ;; action enacted on a particular process
   (ANY "/supervisors/:host/:name/processes/:process/action/:action" [host name process action]
     (supervisor-process-action host name process action)))

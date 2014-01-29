@@ -2,7 +2,7 @@
   (:require [warden.schemas :refer (SupervisorProcess SupervisorProcessStatus SupervisordState SupervisordInfo maybe-err)]
             [necessary-evil.core :as xml-rpc]
             [schema.core :as s]
-            [clojure.core.async :refer (chan timeout close! alts! go-loop >!)]))
+            [clojure.core.async :refer (chan timeout close! alts! go-loop >! <! <!! thread)]))
 
 (defn xml-url [host port] (str "http://" host ":" port "/RPC2"))
 
@@ -68,16 +68,10 @@
 (s/defn get-supervisord-info :- (map-vals maybe-err SupervisordInfo)
   [client]
   "Fetches invormation about the supervisord server"
-  (let [processes (future (get-all-process-info    client))
-        version   (future (get-supervisord-version client))
-        id        (future (get-supervisord-id      client))
-        state     (future (get-supervisord-state   client))
-        pid       (future (get-supervisord-pid     client))]
+  (let [processes (future (get-all-process-info  client))
+        state     (future (get-supervisord-state client))]
     {:processes @processes
-     :version   @version
-     :id        @id
-     :state     @state
-     :pid       @pid}))
+     :state     @state}))
 
 (defn read-supervisord-log [client offset bytes]
   "Reads a number of bytes from the supervisord log, starting at offset"
@@ -178,5 +172,18 @@
 
 (defn get-supervisors [supervisors]
   (map deref
-    (for [{c :client} supervisors]
-      (future (get-supervisor c)))))
+    (for [super supervisors]
+      (future (get-supervisor super)))))
+
+(defn sync-supervisors! [supervisors interval]
+  "Start a background process for refreshing
+   supervisor information on an interval
+   Returns an atom of supervisors"
+  (let [supers (atom {:supervisors (get-supervisors supervisors)})]
+    (thread
+     (<!! (timeout interval))
+     (loop []
+      (swap! supers assoc :supervisors (get-supervisors supervisors))
+      (<! (timeout interval))
+      (recur)))
+    supers))

@@ -49,7 +49,4 @@
 
 (def SupervisordInfo
   {:processes [SupervisorProcess]
-   :version   s/Str
-   :id        s/Str
-   :state     SupervisordState
-   :pid       s/Num})
+   :state     SupervisordState})

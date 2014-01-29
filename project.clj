@@ -56,8 +56,6 @@
                            :preamble ["react/react.min.js"]
                            :externs ["react/externs/react.js"]}}}}
 
-  :hooks [cljx.hooks]
-
   :profiles {
     :release {:aggravate-files [{:input ["resources/dev/public/css/pure.css"
                                          "resources/dev/public/css/font-awesome.css"
