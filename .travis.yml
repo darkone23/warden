@@ -9,7 +9,7 @@ before_script:
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
 script:
-  - lein cljx
+  - lein2 cljx
   - lein2 midje
   - lein2 cljsbuild once karma
   - karma start --single-run --browsers Firefox
