@@ -8,12 +8,9 @@
 
 (init) ;; start the test runner
 
-(def test-s {:pid 1234
-             :processes []
+(def test-s {:processes []
              :state {:statename "RUNNING"
-                     :statecode 1}
-             :id "supervisord"
-             :version "9000"})
+                     :statecode 1}})
 
 (facts "Dom representations can be generated"
   (fact "supervisor nodes!"
