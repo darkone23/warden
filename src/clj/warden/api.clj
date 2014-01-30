@@ -14,15 +14,20 @@
 
 (defn key= [x y]
   "Checks that every key in x is equal in y"
-  (if (every? true? (for [[k v] x] (= v (get y k)))) y))
+  (when (every? true? (for [[k v] x] (= v (get y k)))) y))
 
 (defn filter-key= [m ms]
   "filters a collection of maps by those that match a minimum keyset"
   (filter (partial key= m) ms))
 
 (defn some-key= [m ms]
-  "felect by minimum keyset"
+  "select by minimum keyset"
   (some (partial key= m) ms))
+
+;; GLOBALS WHAT ARE THESE DOING HERE????
+(def supervisor-clients (super/supervisor-clients (:hosts config)))
+(def supervisors-atom (super/sync-supervisors! supervisor-clients 1000))
+(defn read-supervisors [] (get @supervisors-atom :supervisors))
 
 ;; Liberator Resource Definitions
 (defmethod render-map-generic
@@ -33,29 +38,28 @@
   "application/cljson"
   [s ctx] (clj->cljson s))
 
-(def supervisor-clients
-  ;; what is this global data doing here????
-  (super/supervisor-clients (:hosts config)))
-
 (defresource supervisors-all []
   :available-media-types ["application/json""application/edn" "application/cljson"]
   :allowed-methods [:get]
-  :handle-ok (fn [ctx] (super/get-supervisors supervisor-clients)))
+  :exists? (fn [ctx]
+             (let [s (read-supervisors)]
+               (when (seq s) {::supervisors s})))
+  :handle-ok ::supervisors)
 
 (defresource supervisors-group [host]
   :available-media-types ["application/json" "application/edn" "application/cljson"]
   :allowed-methods [:get]
   :exists? (fn [ctx]
-             (let [cs (filter-key= {:host host} supervisor-clients)]
-               (if-let [s (super/get-supervisors cs)] {::supervisors s})))
+             (let [s (filter-key= {:host host} (read-supervisors))]
+               (when (seq s) {::supervisors s})))
   :handle-ok ::supervisors)
 
 (defresource supervisor [host name]
   :available-media-types ["application/json""application/edn" "application/cljson"]
   :allowed-methods [:get]
   :exists? (fn [ctx]
-             (let [c (some-key= {:host host :name name} supervisor-clients)]
-               (if-let [s (super/get-supervisor c)] {::supervisor s})))
+             (if-let [s (some-key= {:host host :name name} (read-supervisors))]
+               {::supervisor s}))
   :handle-ok ::supervisor)
 
 (defresource supervisor-processes [host name])
@@ -64,10 +68,14 @@
 (defresource supervisor-process-action [host name process action]
   :allowed-methods [:post]
   :available-media-types ["application/json" "application/edn" "application/cljson"]
+  :exists? (fn [ctx]
+            (let [c (:client (some-key= {:host host :name name} supervisor-clients))
+                  f (super/api (keyword action))]
+              (if (and c f) {::client c ::action f})))
+  :post-to-missing? false
   :post! (fn [ctx]
-           (let [c (:client (some-key= {:host host :name name} supervisor-clients))
-                 f (super/api (keyword action))]
-             (if (and c f) {::creates {:result (f c process)}})))
+           (let [client (::client ctx) action (::action ctx)]
+             {::creates {:result (action client process)}}))
   :handle-created ::creates)
 
 ;; Compojure Route Definitions
