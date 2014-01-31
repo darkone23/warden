@@ -4,15 +4,22 @@
             [om.dom :as dom :include-macros true]
             [tailrecursion.cljson :refer [cljson->clj]]
             [cljs.core.async :refer (chan put!)])
-  (:require-macros [cljs.core.async.macros :refer (go-loop)]))
+  (:require-macros [cljs.core.async.macros :refer (go go-loop)]))
 
-(defn handle-action! [ch response]
+(defn handle-error! [ch response]
   "Handle responses from the server for POSTing an action"
   (case (:status response)
     201 (if-let [err (some-> (update-in response [:body] cljson->clj)
                              (get-in [:body :result :fault-string]))]
           (put! ch [:error err]))
     404 (if-let [err (:body response)] (put! ch [:error err]))))
+
+(defn handle-action! [ch name action url]
+  "Handle a process action from the user"
+  (go
+   (let [message (str "sent: " action " " name)]
+     (put! ch [:message message])
+     (handle-error! ch (<! (cljson-post url))))))
 
 (defn process [{:keys [name statename description] :as p} owner]
   "Single process in a supervisor"
@@ -37,26 +44,17 @@
 
     om/IWillMount
     (will-mount [this]
-      (let [process-api (str (om/get-state owner :supervisor-api) "/processes/" name)
-            restart-api (str process-api "/action/restart")
-            start-api (str process-api "/action/start")
-            stop-api (str process-api "/action/stop")
-            super-chan (om/get-state owner :super-chan)
-            action-chan (om/get-state owner :action-chan)]
+      (let [[supervisor-api action-chan super-chan]
+              (map (fn [k] (om/get-state owner k))
+                [:supervisor-api :action-chan :super-chan])
+            [start stop restart]
+              (map (fn [a] (str supervisor-api "/processes/" name "/action/" a))
+                ["start", "stop" "restart"])]
         (go-loop [[k v] (<! action-chan)]
           (case k
-            ::restart
-              (let [message (str "sent: restart " (:name v))]
-                (put! super-chan [:message message])
-                (handle-action! super-chan (<! (cljson-post restart-api))))            
-            ::start
-              (let [message (str "sent: start " (:name v))]
-                (put! super-chan [:message message])
-                (handle-action! super-chan (<! (cljson-post start-api))))
-            ::stop
-              (let [message (str "sent: stop " (:name v))]
-                (put! super-chan [:message message])
-                (handle-action! super-chan (<! (cljson-post stop-api)))))
+            ::start   (handle-action! super-chan name "start"   start)
+            ::stop    (handle-action! super-chan name "stop"    stop)
+            ::restart (handle-action! super-chan name "restart" restart))
           (recur (<! action-chan)))))))
 
 (defn processes [processes owner]
