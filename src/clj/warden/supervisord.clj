@@ -19,6 +19,20 @@
           {:fault-code -1
            :fault-string (.getMessage e)})))))
 
+(defn- call* [call]
+  "Creates a call spec for supervisord"
+  (if-not (sequential? call)
+    {:methodName (name call)}
+    (let [[method & args] call
+           method-name (name method)]
+      (if args
+        {:methodName method-name :params args}
+        {:methodName method-name}))))
+
+(defn multi-call [client & calls]
+  "Bundle api calls into a single request"
+  (client :system.multicall (map call* calls)))
+
 (s/defn get-process-info :- (maybe-err SupervisorProcess)
   [client name]
   "Returns a map of information about a process"
@@ -47,11 +61,11 @@
   (client :supervisor.stopAllProcesses))
 
 (s/defn restart [client name] :- (maybe-err Boolean)
-  "Stops a supervised process"
-  (let [stopped (stop client name)]
-    (if (true? stopped)
-      (start client name)
-      stopped)))
+  "Stops a supervised process, returns whether it started properly"
+  (second
+    (multi-call client
+      [:supervisor.stopProcess name]
+      [:supervisor.startProcess name])))
 
 (s/defn get-supervisord-version :- (maybe-err s/Str)
   [client]
