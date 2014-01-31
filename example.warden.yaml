@@ -1,5 +1,9 @@
-# Warden configuration file
-# simply list any number of name/port pairs
+#############################
+# Warden configuration file #
+#############################
+
+# list your collection of supervisor servers:
+# name, host & port
 
 hosts:
   - name: web
@@ -14,4 +18,8 @@ hosts:
     host: load.example.com
     port: 9001
     user: admin
-    pass: "{SHA}82ab876d1387bfafe46cc1c8a2ef074eae50cb1d"
+    pass: secretz
+
+# rate to poll remote supervisor hosts for information (ms)
+
+interval: 1000

@@ -10,7 +10,8 @@
    (s/optional-key :pass) s/Str})
 
 (def Configuration
-  {:hosts [SupervisorHost]})
+  {:hosts [SupervisorHost]
+   :interval s/Num})
 
 (def SupervisorProcess
   {:group          s/Str

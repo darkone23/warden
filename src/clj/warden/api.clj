@@ -25,7 +25,7 @@
 
 ;; GLOBALS WHAT ARE THESE DOING HERE????
 (def supervisor-clients (super/supervisor-clients (:hosts config)))
-(def supervisors-atom (super/sync-supervisors! supervisor-clients 1000))
+(def supervisors-atom (super/sync-supervisors! supervisor-clients (:interval config)))
 (defn read-supervisors [] (get @supervisors-atom :supervisors))
 
 (def last-modified (atom nil))
