@@ -28,6 +28,13 @@
 (def supervisors-atom (super/sync-supervisors! supervisor-clients 1000))
 (defn read-supervisors [] (get @supervisors-atom :supervisors))
 
+(def last-modified (atom nil))
+(add-watch supervisors-atom :last-modified
+  (fn [_ _ _ _] (reset! last-modified (new java.util.Date))))
+(defn etag [_] (hash @last-modified))
+
+(def media-types ["application/json" "application/edn" "application/cljson"])
+
 ;; Liberator Resource Definitions
 (defmethod render-map-generic
   "application/cljson"
@@ -38,7 +45,8 @@
   [s ctx] (clj->cljson s))
 
 (defresource supervisors-all []
-  :available-media-types ["application/json""application/edn" "application/cljson"]
+  :available-media-types media-types
+  :etag etag
   :allowed-methods [:get]
   :exists? (fn [ctx]
              (let [s (read-supervisors)]
@@ -46,7 +54,8 @@
   :handle-ok ::supervisors)
 
 (defresource supervisors-group [host]
-  :available-media-types ["application/json" "application/edn" "application/cljson"]
+  :available-media-types media-types
+  :etag etag
   :allowed-methods [:get]
   :exists? (fn [ctx]
              (let [s (filter-key= {:host host} (read-supervisors))]
@@ -54,7 +63,8 @@
   :handle-ok ::supervisors)
 
 (defresource supervisor [host name]
-  :available-media-types ["application/json""application/edn" "application/cljson"]
+  :available-media-types media-types
+  :etag etag
   :allowed-methods [:get]
   :exists? (fn [ctx]
              (if-let [s (some-key= {:host host :name name} (read-supervisors))]
@@ -65,8 +75,8 @@
 (defresource supervisor-process [host name process])
 
 (defresource supervisor-process-action [host name process action]
+  :available-media-types media-types
   :allowed-methods [:post]
-  :available-media-types ["application/json" "application/edn" "application/cljson"]
   :exists? (fn [ctx]
             (let [c (:client (some-key= {:host host :name name} supervisor-clients))
                   f (super/api (keyword action))]

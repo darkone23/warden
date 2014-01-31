@@ -31,7 +31,7 @@
     om/IWillMount
     (will-mount [this]
       (let [ch (om/get-state owner :api-chan)]
-        (poll! "/api/supervisors" 2500 ch)
+        (poll! "/api/supervisors" 750 ch)
         (go-loop [response (<! ch)]
           (when response
             (let [new-state (parse response)]
