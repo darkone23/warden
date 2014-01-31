@@ -46,6 +46,13 @@
   "Stops all supervised process"
   (client :supervisor.stopAllProcesses))
 
+(s/defn restart [client name] :- (maybe-err Boolean)
+  "Stops a supervised process"
+  (let [stopped (stop client name)]
+    (if (true? stopped)
+      (start client name)
+      stopped)))
+
 (s/defn get-supervisord-version :- (maybe-err s/Str)
   [client]
   (client :supervisor.getSupervisorVersion))
@@ -150,6 +157,7 @@
   {:info        get-supervisord-info
    :status      get-process-info
    :start       start
+   :restart     restart
    :stop        stop
    :stop-all    stop-all
    :start-all   start-all

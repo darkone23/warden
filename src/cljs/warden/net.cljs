@@ -10,11 +10,13 @@
 
 (defn cljson-get [url & [req]]
   "HTTP GET with cljson headers"
-  (http/get url (cljson-request req)))
+  (try (http/get url (cljson-request req))
+    (catch js/Error e (js/console.log "err"))))
 
 (defn cljson-post [url & [req]]
   "HTTP POST with cljson headers"
-  (http/post url (cljson-request req)))
+  (try (http/post url (cljson-request req))
+    (catch js/Error e (js/console.log "err"))))
 
 (defn parse [{body :body}]
   (vec (cljson->clj body)))
@@ -23,6 +25,7 @@
   "Poll a url every `wait` ms, delivering responses on ch"
   ;; TODO: handle errors from http/get
   (go-loop [response (<! (cljson-get url))]
-    (>! ch response)
+    (when response
+      (>! ch response))
     (<! (timeout wait))
     (recur (<! (cljson-get url)))))

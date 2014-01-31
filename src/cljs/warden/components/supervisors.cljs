@@ -3,8 +3,7 @@
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer (chan <! put! timeout)])
-  (:require-macros [cljs.core.async.macros :refer (go-loop)]
-                   [cljs.core.match.macros :refer (match)]))
+  (:require-macros [cljs.core.async.macros :refer (go-loop)]))
 
 ;; helper fns for working with supervisors
 (defn supervisor-id [{:keys [host name port]}]
@@ -13,7 +12,7 @@
 
 (defn healthy? [{:keys [processes]}]
   "determines whether a supervisor server is healthy"
-  (let [acceptable-states #{"RUNNING" "STOPPED"}]
+  (let [acceptable-states #{"RUNNING" "STARTING" "STOPPED"}]
     (every? (comp acceptable-states :statename) processes)))
 
 (defn showing? [config super]
@@ -64,16 +63,17 @@
             config (om/get-state owner :config)]
         (go-loop [[k v] (<! ch)]
           (let [id (supervisor-id v)]
-            (match [k]
-              [:message]
+            (case k
+              :message
                 (let [messages (om/get-state owner [:messages])]
                   (om/set-state! owner [:messages] (conj messages v))
                   (schedule-disj! owner [:messages] v 2500))
-              [:error]
+              :error
                 (let [errors (om/get-state owner [:errors])]
+                  (om/set-state! owner [:messages] #{})
                   (om/set-state! owner [:errors] (conj errors v))
                   (schedule-disj! owner [:errors] v 2500))
-              [::toggle-showing]
+              ::toggle-showing
                 (if (showing? config v)
                   (swap! config update-in [:showing] disj id)
                   (swap! config update-in [:showing] conj id)))

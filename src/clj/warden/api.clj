@@ -4,8 +4,7 @@
             [warden.supervisord :as super]
             [liberator.core :refer (defresource resource)]
             [liberator.representation :refer (render-map-generic render-seq-generic)]
-            [tailrecursion.cljson :refer (clj->cljson)]
-            [clojure.core.match :refer (match)]))
+            [tailrecursion.cljson :refer (clj->cljson)]))
 
 ;; helper fns
 (defn supervisor-id [{:keys [host name port]}]
