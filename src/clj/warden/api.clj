@@ -31,7 +31,9 @@
 (def last-modified (atom nil))
 (add-watch supervisors-atom :last-modified
   (fn [_ _ _ _] (reset! last-modified (new java.util.Date))))
-(defn etag [_] (hash @last-modified))
+
+(defn modified [_] @last-modified)
+(defn etag [{r ::response}] (hash r))
 
 (def media-types ["application/json" "application/edn" "application/cljson"])
 
@@ -46,30 +48,33 @@
 
 (defresource supervisors-all []
   :available-media-types media-types
-  :etag etag
   :allowed-methods [:get]
+  :etag etag
+  :last-modified modified
   :exists? (fn [ctx]
              (let [s (read-supervisors)]
-               (when (seq s) {::supervisors s})))
-  :handle-ok ::supervisors)
+               (when (seq s) {::response s})))
+  :handle-ok ::response)
 
 (defresource supervisors-group [host]
   :available-media-types media-types
-  :etag etag
   :allowed-methods [:get]
+  :etag etag
+  :last-modified modified
   :exists? (fn [ctx]
              (let [s (filter-key= {:host host} (read-supervisors))]
-               (when (seq s) {::supervisors s})))
-  :handle-ok ::supervisors)
+               (when (seq s) {::response s})))
+  :handle-ok ::response)
 
 (defresource supervisor [host name]
   :available-media-types media-types
-  :etag etag
   :allowed-methods [:get]
+  :etag etag
+  :last-modified modified
   :exists? (fn [ctx]
              (if-let [s (some-key= {:host host :name name} (read-supervisors))]
-               {::supervisor s}))
-  :handle-ok ::supervisor)
+               {::response s}))
+  :handle-ok ::response)
 
 (defresource supervisor-processes [host name])
 (defresource supervisor-process [host name process])
@@ -78,14 +83,14 @@
   :available-media-types media-types
   :allowed-methods [:post]
   :exists? (fn [ctx]
-            (let [c (:client (some-key= {:host host :name name} supervisor-clients))
-                  f (super/api (keyword action))]
-              (if (and c f) {::client c ::action f})))
+             (let [c (:client (some-key= {:host host :name name} supervisor-clients))
+                   f (super/api (keyword action))]
+               (if (and c f) {::client c ::action f})))
   :post-to-missing? false
   :post! (fn [ctx]
            (let [client (::client ctx) action (::action ctx)]
-             {::creates {:result (action client process)}}))
-  :handle-created ::creates)
+             {::response {:result (action client process)}}))
+  :handle-created ::response)
 
 ;; Compojure Route Definitions
 (defroutes api-routes
