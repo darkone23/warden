@@ -7,10 +7,19 @@
             [cljs.core.async :refer (chan <!)])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
+
+(defn empty-config [& _] {:showing #{}})
+
+(defn gen-conf-reset! [state owner]
+  "returns a handler for resetting configuration"
+  (fn [e]
+    (do (reset! (om/get-state owner :config) (empty-config))
+        (om/update! state identity))))
+
 (defn header-menu [state owner]
-  (om/component
-   (dom/header #js {:className "pure-menu pure-menu-fixed pure-menu-horizontal"}
-    (dom/h2 #js {:className "pure-u"} (:name state))
+    (om/component
+      (dom/header #js {:className "pure-menu pure-menu-fixed pure-menu-horizontal"}
+        (dom/h2 #js {:className "pure-u" :onClick (gen-conf-reset! state owner)} (:name state))
     (dom/h3 #js {:className "description pure-u"} (:description state)))))
 
 (defn app [state owner]
@@ -18,14 +27,14 @@
   (reify
     om/IRender
     (render [this]
-      (dom/div #js {:className "main pure-g-r"}
-        (om/build header-menu state)
-        (om/build supervisors state
-          {:init-state (om/get-state owner)})))
+      (let [init {:init-state (om/get-state owner)}]
+        (dom/div #js {:className "main pure-g-r"}
+          (om/build header-menu state init)
+          (om/build supervisors state init))))
 
     om/IInitState
     (init-state [this]
-      {:config (local-storage (atom {:showing #{}}) :config)
+      {:config (local-storage (atom (empty-config)) :config)
        :api-chan (chan 1)})
 
     om/IWillMount
