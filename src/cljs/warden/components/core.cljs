@@ -8,19 +8,20 @@
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
 
-(defn empty-config [& _] {:showing #{}})
+(def empty-config {:showing #{}})
 
-(defn gen-conf-reset! [state owner]
+(defn gen-conf-reset! [state config]
   "returns a handler for resetting configuration"
   (fn [e]
-    (do (reset! (om/get-state owner :config) (empty-config))
+    (do (reset! config empty-config)
         (om/update! state identity))))
 
 (defn header-menu [state owner]
     (om/component
-      (dom/header #js {:className "pure-menu pure-menu-fixed pure-menu-horizontal"}
-        (dom/h2 #js {:className "pure-u" :onClick (gen-conf-reset! state owner)} (:name state))
-    (dom/h3 #js {:className "description pure-u"} (:description state)))))
+      (let [reset-handler (gen-conf-reset! state (om/get-state owner :config))]
+        (dom/header #js {:className "pure-menu pure-menu-fixed pure-menu-horizontal"}
+          (dom/h2 #js {:className "pure-u" :onClick reset-handler} (:name state))
+          (dom/h3 #js {:className "description pure-u"} (:description state))))))
 
 (defn app [state owner]
   "App as a function of application state"
@@ -34,7 +35,7 @@
 
     om/IInitState
     (init-state [this]
-      {:config (local-storage (atom (empty-config)) :config)
+      {:config (local-storage (atom empty-config) :config)
        :fn identity
        :api-chan (chan 1)})
 
