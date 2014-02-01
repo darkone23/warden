@@ -108,16 +108,21 @@
 (defn supervisor-api [{:keys [host name]}]
   (str "/api/supervisors/" host "/" name))
 
+(defn prepare-app-state [state owner]
+  (let [app-fn (om/get-state owner :fn)]
+    (app-fn state)))
+
 (defn supervisors [state owner]
   "Collection of supervisor servers"
   (om/component
-    (apply dom/div #js {:className "supervisors pure-u-1"}
-      (for [super (:supervisors state)]
-        (om/build supervisor super
-          {:init-state (assoc (om/get-state owner) :supervisor-api (supervisor-api super))
-           :react-key (supervisor-id super)
-           :fn (fn [{:keys [host port name state] :as super}]
-                 (merge super
-                   {:url (str "http://" host ":" port)
-                    :state-name (:statename state)
-                    :description (str name "@" host)}))})))))
+    (let [state (prepare-app-state state owner)]
+      (apply dom/div #js {:className "supervisors pure-u-1"}
+        (for [super (:supervisors state)]
+          (om/build supervisor super
+            {:init-state (assoc (om/get-state owner) :supervisor-api (supervisor-api super))
+             :react-key (supervisor-id super)
+             :fn (fn [{:keys [host port name state] :as super}]
+                   (merge super
+                     {:url (str "http://" host ":" port)
+                      :state-name (:statename state)
+                      :description (str name "@" host)}))}))))))

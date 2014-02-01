@@ -35,6 +35,7 @@
     om/IInitState
     (init-state [this]
       {:config (local-storage (atom (empty-config)) :config)
+       :fn identity
        :api-chan (chan 1)})
 
     om/IWillMount
