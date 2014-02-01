@@ -7,21 +7,24 @@
             [cljs.core.async :refer (chan <!)])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
-
 (def empty-config {:showing #{}})
 
-(defn gen-conf-reset! [state config]
-  "returns a handler for resetting configuration"
-  (fn [e]
-    (do (reset! config empty-config)
-        (om/update! state identity))))
+(defn supervisors-route [state owner]
+  (fn [e] nil))
+
+(defn processes-route [state owner]
+  (fn [e] nil))
 
 (defn header-menu [state owner]
-    (om/component
-      (let [reset-handler (gen-conf-reset! state (om/get-state owner :config))]
-        (dom/header #js {:className "pure-menu pure-menu-fixed pure-menu-horizontal"}
-          (dom/h2 #js {:className "pure-u" :onClick reset-handler} (:name state))
-          (dom/h3 #js {:className "description pure-u"} (:description state))))))
+  (om/component
+    (dom/header #js {:className "pure-menu pure-menu-fixed pure-menu-open pure-menu-horizontal"}
+     (dom/h2 #js {:className "pure-u"} (:name state))
+     (dom/h3 #js {:className "description pure-u"} (:description state))
+     (dom/ul #js {:className "pure-u"}
+       (dom/li #js {:className "pure-u"}
+         (dom/a #js {:href "#/supervisors" :onClick (supervisors-route state owner)} "supervisors")
+       (dom/li #js {:className "pure-u"}
+         (dom/a #js {:href "#/processes" :onClick (processes-route state owner)} "processes")))))))
 
 (defn app [state owner]
   "App as a function of application state"

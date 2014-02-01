@@ -38,7 +38,7 @@ a:hover {
     color: #666;
 }
 
-.main > header {
+.main > header.pure-menu {
     padding-left: 25px;
     background-color: hsl(144, 57%, 52%);
     z-index: 1;
@@ -47,6 +47,19 @@ a:hover {
 .main > header {
     font-family: 'open_sansbold', Arial, sans-serif;
     letter-spacing: 0.05em;
+}
+
+.main > header ul {
+    float: right;
+}
+.main > header ul a {
+    line-height: 60px;
+    font-size: 1.2em;
+    color: #1B1B1B;
+}
+
+.main > header ul a:hover {
+    background-color: cornflowerblue;
 }
 
 .main h3.description {
