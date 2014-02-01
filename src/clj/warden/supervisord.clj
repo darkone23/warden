@@ -130,42 +130,40 @@
    returns [content new-offset overflow?]"
   (client :supervisor.tailProcessStderrLog name offset bytes))
 
-(defn- tail-channel* [tail-fn client name]
-  "Creates a channel which will emit lines from the remote clients process
+(defn- tail-channel* [[tail-fn read-fn] client name]
+  "Creates a channel which will emit bytes from the remote clients process
    Returns [log-chan control-chan].
    Close control-chan to stop the stream"
-  (let [log-chan (chan 100) control-chan (chan 1)
-        wait 1000 chunk-size 5000]
-    (go-loop [[content offset _] (tail-fn client name 0 chunk-size)]
+  (let [log-chan (chan 100)
+        control-chan (chan 1)
+        wait 1000
+        chunk-size 4096
+        [content offset _] (tail-fn client name 0 chunk-size)]
+    (go-loop [content content
+              offset offset]
       (if (empty? content)
         ;; no lines for reading, start over
         (let [[msg ch] (alts! [control-chan (timeout wait)])]
           (if (= control-chan ch)
             (map close! [log-chan control-chan])
-            (recur (tail-fn client name offset chunk-size))))
+            (recur (read-fn client name offset chunk-size) offset)))
         ;; process lines, adjust offset, start over
-        (let [num-lines (count (re-seq #"\n" content))
-              lines     (take num-lines (re-seq #"[^\n]+" content))
-              read-size (reduce + num-lines (map count lines))
-              offset    (- offset (- (count content) read-size))]
-          (doseq [line lines] (>! log-chan line))
-          (let [[msg ch] (alts! [control-chan (timeout wait)])]
-            (if (= control-chan ch)
-              (map close! [log-chan control-chan])
-              (recur (tail-fn client name offset chunk-size)))))))
+        (let [new-offset (+ offset (count content))]
+          (>! log-chan content)
+          (recur (read-fn client name new-offset chunk-size) new-offset))))
     [log-chan control-chan]))
 
 (defn process-stdout-chan [client name]
-  "Creates a channel which will produce lines from the remote process stdout
+  "Creates a channel which will send bytes from the remote process stdout
    Returns [log-chan control-chan].
    Close control-chan to stop the stream"
-  (tail-channel* tail-process-stdout client name))
+  (tail-channel* [tail-process-stdout read-process-stdout] client name))
 
 (defn process-stderr-chan [client name]
-  "Creates a channel which will produce lines from the remote process stderr
+  "Creates a channel which will send bytes from the remote process stderr
    Returns [log-chan control-chan].
    Close control-chan to stop the stream"
-  (tail-channel* tail-process-stderr client name))
+  (tail-channel* [tail-process-stderr read-process-stderr] client name))
 
 (def api
   {:info        get-supervisord-info
