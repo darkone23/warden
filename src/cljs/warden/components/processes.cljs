@@ -21,6 +21,12 @@
      (put! ch [:message message])
      (handle-error! ch (<! (cljson-post url))))))
 
+(defn supervisor-api [{:keys [host name]}]
+  (str "/api/supervisors/" host "/" name))
+
+(defn process-api [{:keys [supervisor name]}]
+  (str (supervisor-api supervisor) "/processes/" name))
+
 (defn process [{:keys [name statename description] :as p} owner]
   "Single process in a supervisor"
   (reify
@@ -40,28 +46,38 @@
 
     om/IInitState
     (init-state [this]
-      {:action-chan (chan 1)})
+      {:action-chan (chan 1)
+       :message-chan (chan)})
 
     om/IWillMount
     (will-mount [this]
-      (let [[supervisor-api action-chan super-chan]
-              (map (fn [k] (om/get-state owner k))
-                [:supervisor-api :action-chan :super-chan])
+      (let [action-chan (om/get-state owner :action-chan)
+            message-chan (om/get-state owner :message-chan)
+            process-api (process-api p)
             [start stop restart]
-              (map (fn [a] (str supervisor-api "/processes/" name "/action/" a))
-                ["start", "stop" "restart"])]
+              (map #(str process-api "/action/" %) ["start", "stop" "restart"])]
         (go-loop [[k v] (<! action-chan)]
           (case k
-            ::start   (handle-action! super-chan name "start"   start)
-            ::stop    (handle-action! super-chan name "stop"    stop)
-            ::restart (handle-action! super-chan name "restart" restart))
+            ::start   (handle-action! message-chan name "start"   start)
+            ::stop    (handle-action! message-chan name "stop"    stop)
+            ::restart (handle-action! message-chan name "restart" restart))
           (recur (<! action-chan)))))))
 
-(defn processes [processes owner]
+(defn prepare-processes [{supers :supervisors} owner]
+  "Provide each process with select information about its supervisor"
+  (mapcat
+   (fn [s]
+     (if (get-in s [:processes :fault-string])
+       [] ;; dont try to render from unreachable supervisors
+       (map #(assoc % :supervisor (select-keys s [:host :name :port])) (:processes s))))
+    supers))
+
+(defn processes [state owner]
   "Collection of supervised processes"
   (om/component
-    (apply dom/ul #js {:className "processes"}
-      (for [{:keys [pid name] :as p} processes]
-        (om/build process p
-          {:init-state (om/get-state owner)
-           :react-key (str pid name)})))))
+   (let [processes (prepare-processes state owner)]
+     (apply dom/ul #js {:className "processes"}
+       (for [{:keys [supervisor name] :as p} processes]
+         (om/build process p
+           {:init-state (om/get-state owner)
+            :react-key (str (:host supervisor) (:name supervisor) name)}))))))
