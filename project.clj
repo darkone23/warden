@@ -12,8 +12,9 @@
                  [rm-hull/ring-gzip-middleware "0.1.7"]
                  [prismatic/schema "0.2.0"]
                  [necessary-evil "2.0.0"]
-                 [om "0.3.0"]
-                 [cljs-http "0.1.4"]
+                 [om "0.3.1"]
+                 [secretary "0.5.0"]
+                 [cljs-http "0.1.5"]
                  [alandipert/storage-atom "1.1.2"]]
 
   :source-paths ["src/clj" "target/cljx-generated/clj"]

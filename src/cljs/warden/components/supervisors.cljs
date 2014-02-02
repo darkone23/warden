@@ -109,7 +109,8 @@
   (str "/api/supervisors/" host "/" name))
 
 (defn prepare-app-state [state owner]
-  (let [app-fn (om/get-state owner :fn)]
+  "Process the app state through the global transformer"
+  (let [app-fn (:fn state)]
     (app-fn state)))
 
 (defn supervisors [state owner]
