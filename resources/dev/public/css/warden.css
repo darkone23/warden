@@ -52,6 +52,11 @@ a:hover {
 .main > header ul {
     float: right;
 }
+
+.main > header li.selected {
+    background-color: rgb(43, 184, 105);
+}
+
 .main > header ul a {
     line-height: 60px;
     font-size: 1.2em;
@@ -79,18 +84,6 @@ a:hover {
 
 .supervisor header {
     font-size: 1.15em;
-    cursor: pointer;
-}
-
-.supervisor header .controls {
-    float: right;
-    font-size: 1.25em;
-    position: relative;
-    top: 5px;
-}
-
-.supervisor header .controls i {
-    float: right;
 }
 
 .supervisor header .description a {
@@ -132,13 +125,14 @@ a:hover {
 .process .description {
     line-height: 2em;
     font-size: 0.9em;
+    display: block;
 }
 
 .process .controls {
-    float: right;
     line-height: 1em;
     font-size: 1.5em;
     cursor: pointer;
+    margin-right: 8px;    
 }
 
 .controls {
@@ -175,6 +169,7 @@ a:hover {
     line-height: 1.2em;
     margin-right: 8px;
     padding: 0.3em;
+    width: 85px;
     border-radius: 0.2em;
 }
 

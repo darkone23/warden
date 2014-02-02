@@ -27,22 +27,28 @@
 (defn process-api [{:keys [supervisor name]}]
   (str (supervisor-api supervisor) "/processes/" name))
 
-(defn process [{:keys [name statename description] :as p} owner]
+(defn process-title [process]
+  (let [supervisor-host (get-in process [:supervisor :host])
+        supervisor-name (get-in process [:supervisor :name])
+        name (:name process)]
+    (str name " on " supervisor-name "@" supervisor-host)))
+
+(defn process [{:keys [statename description] :as p} owner]
   "Single process in a supervisor"
   (reify
     om/IRenderState
     (render-state [this {:keys [action-chan]}]
       (dom/li #js {:className (str statename " process pure-u-1")}
         (dom/span #js {:className "state pure-u"} statename)
-        (dom/span #js {:className "name pure-u"} name)
-        (dom/span #js {:className "description pure-u"} description)
         (dom/span #js {:className "controls pure-u"}
           (dom/i #js {:className "start fa fa-play"
                       :onClick #(put! action-chan [::start @p])})
           (dom/i #js {:className "stop fa fa-stop"
                       :onClick #(put! action-chan [::stop @p])})
           (dom/i #js {:className "stop fa fa-refresh"
-                      :onClick #(put! action-chan [::restart @p])}))))
+                      :onClick #(put! action-chan [::restart @p])}))
+        (dom/span #js {:className "name pure-u"} (process-title p))
+        (dom/span #js {:className "description pure-u"} description)))
 
     om/IInitState
     (init-state [this]

@@ -13,7 +13,8 @@
                       :supervisors []}))
 
 (defroute "/" []
-  (swap! app-state assoc :route :home))
+;  (swap! app-state assoc :route :home)
+  (swap! app-state assoc :route :supervisors))
 
 (defroute "/supervisors" []
   (swap! app-state assoc :route :supervisors))

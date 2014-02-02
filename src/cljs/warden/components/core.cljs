@@ -10,22 +10,16 @@
 
 (def empty-config {:showing #{}})
 
-(defn supervisors-route [state owner]
-  (fn [e] nil))
-
-(defn processes-route [state owner]
-  (fn [e] nil))
-
-(defn header-menu [state owner]
+(defn header-menu [{:keys [name route description]} owner]
   (om/component
-    (dom/header #js {:className "pure-menu pure-menu-fixed pure-menu-open pure-menu-horizontal"}
-     (dom/h2 #js {:className "pure-u"} (:name state))
-     (dom/h3 #js {:className "description pure-u"} (:description state))
+   (dom/header #js {:className "pure-menu pure-menu-fixed pure-menu-open pure-menu-horizontal"}
+     (dom/h2 #js {:className "pure-u"} name)
+     (dom/h3 #js {:className "description pure-u"} description)
      (dom/ul #js {:className "pure-u"}
        (dom/li #js {:className "pure-u"}
-         (dom/a #js {:href "#/supervisors" :onClick (supervisors-route state owner)} "supervisors")
+         (dom/a #js {:href "#/supervisors"} "supervisors")
        (dom/li #js {:className "pure-u"}
-         (dom/a #js {:href "#/processes" :onClick (processes-route state owner)} "processes")))))))
+         (dom/a #js {:href "#/processes"} "processes")))))))
 
 (defn app [state owner]
   "App as a function of application state"
