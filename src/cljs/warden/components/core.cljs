@@ -1,6 +1,7 @@
 (ns warden.components.core
   (:require [warden.net :refer (poll! parse)]
             [warden.components.supervisors :refer (supervisors)]
+            [warden.components.processes :refer (processes)]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [alandipert.storage-atom :refer (local-storage)]
@@ -31,10 +32,14 @@
   (reify
     om/IRender
     (render [this]
-      (let [init {:init-state (om/get-state owner)}]
+      (let [init {:init-state (om/get-state owner)}
+            route (:route state)]
         (dom/div #js {:className "main pure-g-r"}
           (om/build header-menu state init)
-          (om/build supervisors state init))))
+          (case (:route state)
+            :supervisors (om/build supervisors state init)
+            :processes (om/build processes state init)
+            (dom/h1 nil "Hello world")))))
 
     om/IInitState
     (init-state [this]
