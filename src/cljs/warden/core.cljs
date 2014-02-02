@@ -15,13 +15,26 @@
 (defroute "/" []
   (swap! app-state assoc :route :home))
 
-(defroute "/:route" [route]
-  (swap! app-state assoc :route (keyword route)))
+(defroute "/supervisors" []
+  (swap! app-state assoc :route :supervisors))
+
+(defroute "/processes" []
+  (swap! app-state assoc :route :processes))
+
+(defroute "/supervisors/:host/:name" {:keys [host name]}
+  (swap! app-state assoc
+    :route :supervisors
+    :route-params {:host host :name name}))
+
+(defroute "/supervisors/:host/:name/:process" {:keys [host name process]}
+  (swap! app-state assoc
+    :route :supervisors
+    :route-params {:host host :name name :process process}))
 
 (def history (History.))
 
-(events/listen history EventType.NAVIGATE
-  (fn [e] (secretary/dispatch! (.-token e))))
+(events/listen history
+  EventType.NAVIGATE #(secretary/dispatch (.-token %)))
 
 (.setEnabled history true)
 

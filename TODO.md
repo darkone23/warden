@@ -1,22 +1,27 @@
 ## Before 0.1.0:
 
+- Clientside Routes
+  - high-level supervisors list
+  - high level processes list
+  - supervisor detail
+  - process detail
+
+- Tail stdout/stderr via websockets
+  - should go in process detail page
+  - use chord library?
+
 - Process control
   - start-all
   - stop-all
   - restart-all
-  - clear log
+
 - Better test coverage!
   - Schemas for api endpoints
 
 ## Planned features
 
-- Tail stdout/stderr via websockets
-  - use chord library?
-- Drill-down process detail
-- Clientside Filtering
-  - by app
-  - by host
+- Filterable views (supervisors/processes)
+- auth support
 
 ## Other ideas
-- auth
 - api for service discovery/live configuration
