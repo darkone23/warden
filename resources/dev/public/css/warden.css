@@ -7,7 +7,7 @@ html {
 }
 
 .main {
-    background-color: hsla(40, 85%, 85%, 0.4);
+    /* background-color: hsla(40, 85%, 85%, 0.4); */
     overflow: auto;
 }
 
@@ -83,11 +83,17 @@ a:hover {
 }
 
 .supervisor {
+    /* background: green; */
+    /* margin: 0px; */
     padding: 10px 0 0 0;
-    border-bottom: 2px solid #ccc;
+    /* border-bottom: 2px solid #ccc; */
 }
 
 .supervisor header {
+    border-radius: 5px;
+    padding: 5px;
+    margin: 10px;
+    background-color: hsla(0, 5%, 95%, 0.9);
     font-size: 1.15em;
 }
 
