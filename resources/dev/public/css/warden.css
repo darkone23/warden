@@ -53,9 +53,14 @@ a:hover {
     float: right;
 }
 
-.main > header li.selected {
+.main > header ul.supervisors li.supervisors {
     background-color: rgb(43, 184, 105);
 }
+
+.main > header ul.processes li.processes {
+    background-color: rgb(43, 184, 105);
+}
+
 
 .main > header ul a {
     line-height: 60px;
@@ -72,7 +77,7 @@ a:hover {
     line-height: 1.8em;
 }
 
-.supervisors, .processes {
+.main > .supervisors, .main > .processes {
     padding: 80px 25px 0;
     height: 100%;
 }

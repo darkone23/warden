@@ -10,15 +10,15 @@
 
 (def empty-config {:showing #{}})
 
-(defn header-menu [{:keys [name route description]} owner]
+(defn header-menu [{:keys [route description] :as state} owner]
   (om/component
    (dom/header #js {:className "pure-menu pure-menu-fixed pure-menu-open pure-menu-horizontal"}
-     (dom/h2 #js {:className "pure-u"} name)
+     (dom/h2 #js {:className "pure-u"} (:name state))
      (dom/h3 #js {:className "description pure-u"} description)
-     (dom/ul #js {:className "pure-u"}
-       (dom/li #js {:className "pure-u"}
+     (dom/ul #js {:className (str "pure-u " (name route))}
+       (dom/li #js {:key "nav-supervisors" :className "pure-u supervisors"}
          (dom/a #js {:href "#/supervisors"} "supervisors")
-       (dom/li #js {:className "pure-u"}
+       (dom/li #js {:key "nav-processes" :className "pure-u processes"}
          (dom/a #js {:href "#/processes"} "processes")))))))
 
 (defn app [state owner]
@@ -32,8 +32,7 @@
           (om/build header-menu state init)
           (case (:route state)
             :supervisors (om/build supervisors state init)
-            :processes (om/build processes state init)
-            (dom/h1 nil "Hello world")))))
+            :processes (om/build processes state init)))))
 
     om/IInitState
     (init-state [this]
