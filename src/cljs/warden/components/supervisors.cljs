@@ -12,8 +12,12 @@
 
 (defn healthy? [{:keys [processes]}]
   "determines whether a supervisor server is healthy"
-  (let [acceptable-states #{"RUNNING" "STARTING" "STOPPED"}]
-    (every? (comp acceptable-states :statename) processes)))
+  (let [info-states #{"STARTING" "EXITING"}
+        healthy-states #{"RUNNING" "STOPPED"}]
+    (if (every? (comp info-states :statename) processes)
+      :info
+      (if (every? (comp healthy-states :statename) processes)
+        :healthy))))
 
 (defn supervisor-ok [{:keys [url state-name description] :as super} owner]
   "Representation of a supervisor server
@@ -23,9 +27,15 @@
     (render [this]
       (let [procs (:processes super)
             health (healthy? super)
-            health-class (if health "healthy" "unhealthy")
-            health-icon-class (if health "fa-eye" "fa-exclamation-triangle")]
-        (dom/section #js {:className (str "supervisor pure-u-1 " health-class)}
+            health-class (case health
+                           :info "info"
+                           :healthy "healthy"
+                           "unhealthy")
+            health-icon-class (case health
+                                :info "fa-info-circle"
+                                :healthy "fa-eye"
+                                "fa-exclamation-triangle")]
+        (dom/section #js {:className (str "supervisor pure-u-1-3 " health-class)}
           (dom/header #js {:className "pure-g-r"}
              (dom/span #js {:className "pure-u-1-2"}
                (dom/span #js {:className (str "state " state-name)}
@@ -36,11 +46,11 @@
 
 (defn supervisor-err [{:keys [host name port] {err :fault-string} :state}]
   "Unreachable supervisor server"
-  (let [message (str "Could not connect to " name " at " host ":"  port)]
-    (dom/section #js {:className "supervisor error pure-u-1"}
+  (let [message (str name "@" host)]
+    (dom/section #js {:className "supervisor error pure-u-1-3"}
+      (dom/i #js {:className "fa fa-eye-slash fa-2x"})
       (dom/span #js {:className "message pure-u"} message)
-      (dom/code #js {:className "err pure-u"} err)
-      (dom/i #js {:className "fa fa-eye-slash fa-2x"}))))
+      (dom/code #js {:className "err pure-u"} err))))
 
 (defn supervisor [state owner]
   "Individual supervisor ok|err component
@@ -66,7 +76,7 @@
   "Collection of supervisor servers"
   (om/component
     (let [state (prepare-app-state state owner)]
-      (apply dom/div #js {:className "supervisors pure-u-1"}
+      (apply dom/div #js {:className "supervisors pure-u-1 pure-g-r"}
         (for [super (:supervisors state)]
           (om/build supervisor super
             {:react-key (supervisor-id super)

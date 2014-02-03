@@ -91,9 +91,12 @@ a:hover {
     font-size: 1.15em;
 }
 
-.supervisor header .description a {
-    margin-left: 5px;
-    padding-left: 5px;
+.supervisor header .description {
+    display: block;
+}
+
+.supervisor.error .err {
+    display: block;
 }
 
 .supervisor header .process-count {
@@ -111,6 +114,10 @@ a:hover {
 
 .healthy .state i {
     color: hsl(150, 70%, 40%);
+}
+
+.info .state i {
+    color: hsl(190, 70%, 40%);
 }
 
 .process {
@@ -214,16 +221,11 @@ a:hover {
 }
 
 .supervisor.error code.err {
-    padding-left: 10px;
     line-height: 1.5em;
     font-size: 1.25em;
     font-family: monospace;
 }
 
-.supervisor.error code.err::before {
-    content: " | "
-}
-
 .supervisor.error > i {
-    float: right;
+    margin-right: 10px;
 }

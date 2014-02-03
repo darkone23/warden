@@ -33,7 +33,7 @@
         name (:name process)]
     (str name " on " supervisor-name "@" supervisor-host)))
 
-(defn process [{:keys [statename description] :as p} owner]
+(defn process [{:keys [statename] :as p} owner]
   "Single process in a supervisor"
   (reify
     om/IRenderState
@@ -47,8 +47,7 @@
                       :onClick #(put! action-chan [::stop @p])})
           (dom/i #js {:className "stop fa fa-refresh"
                       :onClick #(put! action-chan [::restart @p])}))
-        (dom/span #js {:className "name pure-u"} (process-title p))
-        (dom/span #js {:className "description pure-u"} description)))
+        (dom/span #js {:className "name pure-u"} (process-title p))))
 
     om/IInitState
     (init-state [this]
