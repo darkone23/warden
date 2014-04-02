@@ -6,7 +6,11 @@
 
 (defn xml-url [host port] (str "http://" host ":" port "/RPC2"))
 
-(defn get-url [{:keys [host port]}] (xml-url host port))
+(defn get-url [{:keys [host port user pass]}]
+  (let [host (if (and user pass)
+               (str user ":" pass "@" host)
+               host)]
+    (xml-url host port)))
 
 (defn client [supervisor]
   "Generates an api client out of a config entry"
