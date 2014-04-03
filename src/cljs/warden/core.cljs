@@ -40,4 +40,4 @@
 (.setEnabled history true)
 
 (defn ^:export start []
-  (om/root app-state app js/document.body))
+  (om/root app app-state {:target js/document.body}))

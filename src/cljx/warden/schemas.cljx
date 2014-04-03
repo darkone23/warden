@@ -11,7 +11,9 @@
 
 (def Configuration
   {:hosts [SupervisorHost]
-   :interval s/Num})
+   :interval s/Num
+   (s/optional-key :user) s/Str
+   (s/optional-key :pass) s/Str})
 
 (def SupervisorProcess
   {:group          s/Str

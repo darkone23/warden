@@ -46,5 +46,5 @@
         (go-loop [response (<! ch)]
           (when response
             (let [new-state (parse response)]
-              (om/update! state assoc-in [:supervisors] new-state))
+              (om/update! state [:supervisors] new-state))
             (recur (<! ch))))))))

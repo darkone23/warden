@@ -3,17 +3,18 @@
   :url "https://github.com/eggsby/warden"
 
   :dependencies [[org.clojure/clojure "1.6.0"]
-                 [org.clojure/clojurescript "0.0-2138"]
-                 [org.clojure/core.async "0.1.267.0-0d7780-alpha"]
+                 [org.clojure/clojurescript "0.0-2173"]
+                 [org.clojure/core.async "0.1.278.0-76b25b-alpha"]
                  [tailrecursion/cljson "1.0.6"]
                  [clj-yaml "0.4.0"]
+                 [com.cemerick/friend "0.2.0"]
                  [liberator "0.10.0"]
                  [compojure "1.1.6"]
                  [rm-hull/ring-gzip-middleware "0.1.7"]
                  [prismatic/schema "0.2.0"]
                  [necessary-evil "2.0.0"]
-                 [om "0.3.1"]
-                 [secretary "0.5.0"]
+                 [om "0.5.3"]
+                 [secretary "1.1.0"]
                  [cljs-http "0.1.5"]
                  [alandipert/storage-atom "1.1.2"]]
 
