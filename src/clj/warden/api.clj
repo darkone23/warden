@@ -4,7 +4,10 @@
             [warden.supervisord :as super]
             [liberator.core :refer (defresource resource)]
             [liberator.representation :refer (render-map-generic render-seq-generic)]
-            [tailrecursion.cljson :refer (clj->cljson)]))
+            [tailrecursion.cljson :refer (clj->cljson)]
+            [cemerick.friend :as friend]
+            [cemerick.friend [workflows :as workflows]
+                             [credentials :as creds]]))
 
 ;; helper fns
 (defn supervisor-id [{:keys [host name port]}]
@@ -93,7 +96,7 @@
   :handle-created ::response)
 
 ;; Compojure Route Definitions
-(defroutes api-routes
+(defroutes api-routes*
   ;; list of all supervisors
   (ANY "/supervisors" []
     (supervisors-all))
@@ -112,3 +115,23 @@
   ;; action enacted on a particular process
   (ANY "/supervisors/:host/:name/processes/:process/action/:action" [host name process action]
     (supervisor-process-action host name process action)))
+
+(defn authorize* [routes user pass]
+  (let [auth-name "secured warden"
+        credentials {user {:username user
+                           :password (creds/hash-bcrypt pass)}}
+        unauthed (fn [req] (workflows/http-basic-deny auth-name req))
+        auth     (fn [req] (creds/bcrypt-credential-fn credentials req))
+        configuration {:allow-anon? false
+                       :unauthenticated-handler unauthed
+                       :workflows [(workflows/http-basic
+                                     :credential-fn auth
+                                     :realm auth-name)]}]
+    (friend/authenticate routes configuration)))
+
+(defn authorize [routes {:keys [user pass]}]
+  (if (and user pass)
+    (authorize* routes user pass)
+    routes))
+
+(def api-routes (authorize api-routes* config))
