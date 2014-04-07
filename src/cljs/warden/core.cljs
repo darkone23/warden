@@ -9,11 +9,10 @@
 
 (def app-state (atom {:name "warden"
                       :description "process management"
-                      :route :home
+                      :route :supervisors
                       :supervisors []}))
 
 (defroute "/" []
-;  (swap! app-state assoc :route :home)
   (swap! app-state assoc :route :supervisors))
 
 (defroute "/supervisors" []
