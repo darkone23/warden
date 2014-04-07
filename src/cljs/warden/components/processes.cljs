@@ -1,5 +1,6 @@
 (ns warden.components.processes
   (:require [warden.net :refer (cljson-post)]
+            [warden.util :refer (some-key=)]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [tailrecursion.cljson :refer [cljson->clj]]
@@ -90,7 +91,14 @@
            {:init-state (om/get-state owner)
             :react-key (str (:host supervisor) (:name supervisor) name)}))))))
 
+(defn f [{{host :host sname :name pname :process} :route-params supers :supervisors}]
+  (if-let [s (some-key= {:host host :name sname} supers)]
+    (if-let [p (some-key= {:name pname} (:processes s))]
+      (assoc p :supervisor s)
+      {:error (str "Could not find process named '" pname "'")})
+    {:error (str "Could not find supervisor named '" sname "' on host " host)}))
 
 (defn process-detail [state owner]
-  (om/component
-   (dom/div #js {:className "pure-u"} "hello, process detail")))
+  (let [p (f state)]
+    (om/component
+     (om/build process p {:init-state (om/get-state owner)}))))
