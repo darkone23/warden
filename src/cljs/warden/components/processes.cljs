@@ -91,7 +91,7 @@
            {:init-state (om/get-state owner)
             :react-key (str (:host supervisor) (:name supervisor) name)}))))))
 
-(defn f [{{host :host sname :name pname :process} :route-params supers :supervisors}]
+(defn get-process [{{host :host sname :name pname :process} :route-params supers :supervisors}]
   (if-let [s (some-key= {:host host :name sname} supers)]
     (if-let [p (some-key= {:name pname} (:processes s))]
       (assoc p :supervisor s)
@@ -99,6 +99,6 @@
     {:error (str "Could not find supervisor named '" sname "' on host " host)}))
 
 (defn process-detail [state owner]
-  (let [p (f state)]
+  (let [p (get-process state)]
     (om/component
      (om/build process p {:init-state (om/get-state owner)}))))
