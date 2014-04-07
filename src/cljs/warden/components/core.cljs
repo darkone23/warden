@@ -1,7 +1,7 @@
 (ns warden.components.core
   (:require [warden.net :refer (poll! parse)]
-            [warden.components.supervisors :refer (supervisors)]
-            [warden.components.processes :refer (processes)]
+            [warden.components.supervisors :refer (supervisors supervisor-detail)]
+            [warden.components.processes :refer (processes process-detail)]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [alandipert.storage-atom :refer (local-storage)]
@@ -20,10 +20,6 @@
          (dom/a #js {:href "#/supervisors"} "supervisors")
        (dom/li #js {:key "nav-processes" :className "pure-u processes"}
          (dom/a #js {:href "#/processes"} "processes")))))))
-
-(defn supervisor-detail [state owner]
-  (om/component
-   (dom/div nil "hello, supervisor detail")))
 
 (defn app [state owner]
   "App as a function of application state"

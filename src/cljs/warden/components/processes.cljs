@@ -33,6 +33,9 @@
         name (:name process)]
     (str name " on " supervisor-name "@" supervisor-host)))
 
+(defn process-detail-url [{{:keys [host name]} :supervisor :as p}]
+  (str "#/supervisors/" host "/" name "/" (:name p)))
+
 (defn process [{:keys [statename] :as p} owner]
   "Single process in a supervisor"
   (reify
@@ -47,7 +50,7 @@
                       :onClick #(put! action-chan [::stop @p])})
           (dom/i #js {:className "stop fa fa-refresh"
                       :onClick #(put! action-chan [::restart @p])}))
-        (dom/span #js {:className "name pure-u"} (process-title p))))
+        (dom/a #js {:className "name pure-u" :href (process-detail-url p)} (process-title p))))
 
     om/IInitState
     (init-state [this]
@@ -86,3 +89,8 @@
          (om/build process p
            {:init-state (om/get-state owner)
             :react-key (str (:host supervisor) (:name supervisor) name)}))))))
+
+
+(defn process-detail [state owner]
+  (om/component
+   (dom/div #js {:className "pure-u"} "hello, process detail")))

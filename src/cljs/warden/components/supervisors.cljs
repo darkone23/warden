@@ -93,3 +93,7 @@
           (om/build supervisor super
             {:react-key (supervisor-id super)
              :fn prepare-supervisor-information}))))))
+
+(defn supervisor-detail [state owner]
+  (om/component
+   (dom/div #js {:className "pure-u"} "hello, supervisor detail")))
