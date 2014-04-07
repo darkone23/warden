@@ -42,7 +42,7 @@
                  (dom/span #js {:className "process-count"} (count procs))
                  (dom/i #js {:className (str "fa " health-icon-class)}))
                (dom/span #js {:className "description"}
-                 (dom/a #js {:href url :target "_blank"} description)))))))))
+                 (dom/a #js {:href url} description)))))))))
 
 (defn supervisor-err [{:keys [host name port] {err :fault-string} :state}]
   "Unreachable supervisor server"
@@ -82,6 +82,6 @@
             {:react-key (supervisor-id super)
              :fn (fn [{:keys [host port name state] :as super}]
                    (merge super
-                     {:url (str "http://" host ":" port)
+                     {:url (str "#/supervisors/" host "/" name)
                       :state-name (:statename state)
                       :description (str name "@" host)}))}))))))

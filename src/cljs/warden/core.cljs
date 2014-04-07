@@ -24,12 +24,12 @@
 
 (defroute "/supervisors/:host/:name" [host name]
   (swap! app-state assoc
-    :route :supervisors
+    :route :supervisor-detail
     :route-params {:host host :name name}))
 
 (defroute "/supervisors/:host/:name/:process" [host name process]
   (swap! app-state assoc
-    :route :supervisors
+    :route :process-detail
     :route-params {:host host :name name :process process}))
 
 (def history (History.))

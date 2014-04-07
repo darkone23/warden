@@ -11,6 +11,11 @@ html {
     overflow: auto;
 }
 
+.main > *:nth-child(2) {
+    padding: 80px 25px 0px;
+    height: 100%;
+}
+
 * {
     /* simplify box model */
     -webkit-box-sizing: border-box;
@@ -75,11 +80,6 @@ a:hover {
 .main h3.description {
     padding-left: .5em;
     line-height: 1.8em;
-}
-
-.main > .supervisors, .main > .processes {
-    padding: 80px 25px 0;
-    height: 100%;
 }
 
 .supervisor {

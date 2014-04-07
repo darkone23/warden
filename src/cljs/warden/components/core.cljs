@@ -21,6 +21,10 @@
        (dom/li #js {:key "nav-processes" :className "pure-u processes"}
          (dom/a #js {:href "#/processes"} "processes")))))))
 
+(defn supervisor-detail [state owner]
+  (om/component
+   (dom/div nil "hello, supervisor detail")))
+
 (defn app [state owner]
   "App as a function of application state"
   (reify
@@ -32,7 +36,9 @@
           (om/build header-menu state init)
           (case (:route state)
             :supervisors (om/build supervisors state init)
-            :processes (om/build processes state init)))))
+            :supervisor-detail (om/build supervisor-detail state init)
+            :processes (om/build processes state init)
+            :process-detail (om/build process-detail state init)))))
 
     om/IInitState
     (init-state [this]
