@@ -90,6 +90,11 @@
             {:react-key (supervisor-id super)
              :fn prepare-supervisor-information}))))))
 
+(defn get-supervisor [{{:keys [host name]} :route-params supers :supervisors}]
+  (or (some-key= {:host host :name name} supers)
+      {:error (str "Could not find supervisor named '" name "' on host " host)}))
+
 (defn supervisor-detail [state owner]
-  (om/component
-   (dom/div #js {:className "pure-u"} "hello, supervisor detail")))
+  (let [supervisor (get-supervisor state)]
+    (om/component
+     (dom/div #js {:className "pure-u"} (str "hello " (supervisor-id supervisor))))))
