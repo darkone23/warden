@@ -1,14 +1,10 @@
 (ns warden.components.supervisors
   (:require [warden.components.processes :refer (processes)]
+            [warden.util :refer (supervisor-id some-key=)]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer (chan <! put! timeout)])
   (:require-macros [cljs.core.async.macros :refer (go-loop)]))
-
-;; helper fns for working with supervisors
-(defn supervisor-id [{:keys [host name port]}]
-  "id for referencing a particular supervisor server"
-  (str host "-" port "-" name))
 
 (defn healthy? [{:keys [processes]}]
   "determines whether a supervisor server is healthy"
