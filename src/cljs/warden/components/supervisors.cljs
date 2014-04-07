@@ -19,6 +19,18 @@
       (if (every? (comp healthy-states :statename) processes)
         :healthy))))
 
+(defn supervisor-health-class [health]
+  (case health
+    :info "info"
+    :healthy "healthy"
+    "unhealthy"))
+
+(defn supervisor-health-icon-class [health]
+  (case health
+    :info "fa-info-circle"
+    :healthy "fa-eye"
+    "fa-exclamation-triangle"))
+
 (defn supervisor-ok [{:keys [url state-name description] :as super} owner]
   "Representation of a supervisor server
    Relays UI events to parent core.async channel"
@@ -27,14 +39,8 @@
     (render [this]
       (let [procs (:processes super)
             health (healthy? super)
-            health-class (case health
-                           :info "info"
-                           :healthy "healthy"
-                           "unhealthy")
-            health-icon-class (case health
-                                :info "fa-info-circle"
-                                :healthy "fa-eye"
-                                "fa-exclamation-triangle")]
+            health-class (supervisor-health-class health)
+            health-icon-class (supervisor-health-icon-class health)]
         (dom/section #js {:className (str "supervisor pure-u-1-3 " health-class)}
           (dom/header #js {:className "pure-g-r"}
              (dom/span #js {:className "pure-u-1-2"}
@@ -72,6 +78,12 @@
 
 (defn prepare-app-state [app-state owner] app-state)
 
+(defn prepare-supervisor-information [{:keys [host port name state] :as super}]
+  (merge super
+    {:url (str "#/supervisors/" host "/" name)
+     :state-name (:statename state)
+     :description (str name "@" host)}))
+
 (defn supervisors [state owner]
   "Collection of supervisor servers"
   (om/component
@@ -80,8 +92,4 @@
         (for [super (:supervisors state)]
           (om/build supervisor super
             {:react-key (supervisor-id super)
-             :fn (fn [{:keys [host port name state] :as super}]
-                   (merge super
-                     {:url (str "#/supervisors/" host "/" name)
-                      :state-name (:statename state)
-                      :description (str name "@" host)}))}))))))
+             :fn prepare-supervisor-information}))))))
