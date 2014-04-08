@@ -72,19 +72,19 @@
             ::restart (handle-action! message-chan name "restart" restart))
           (recur (<! action-chan)))))))
 
-(defn prepare-processes [{supers :supervisors} owner]
+(defn prepare-processes [{supers :supervisors}]
   "Provide each process with select information about its supervisor"
   (mapcat
    (fn [s]
      (if (get-in s [:processes :fault-string])
        [] ;; dont try to render from unreachable supervisors
-       (map #(assoc % :supervisor (select-keys s [:host :name :port])) (:processes s))))
+       (map #(assoc % :supervisor s) (:processes s))))
     supers))
 
 (defn processes [state owner]
   "Collection of supervised processes"
   (om/component
-   (let [processes (prepare-processes state owner)]
+   (let [processes (prepare-processes state)]
      (apply dom/ul #js {:className "processes"}
        (for [{:keys [supervisor name] :as p} processes]
          (om/build process p

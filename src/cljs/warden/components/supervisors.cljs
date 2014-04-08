@@ -1,6 +1,6 @@
 (ns warden.components.supervisors
   (:require [warden.components.processes :refer (processes)]
-            [warden.util :refer (supervisor-id some-key=)]
+            [warden.util :refer (supervisor-id some-key= filter-key=)]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer (chan <! put! timeout)])
@@ -94,7 +94,17 @@
   (or (some-key= {:host host :name name} supers)
       {:error (str "Could not find supervisor named '" name "' on host " host)}))
 
+(defn filter-supervisors [state supervisor]
+  (update-in state [:supervisors]
+    (fn [supervisors] (filter-key= supervisor supervisors))))
+
+(defn supervisor-display [{:keys [name host]}]
+  (str name "@" host))
+
 (defn supervisor-detail [state owner]
-  (let [supervisor (get-supervisor state)]
+  (let [supervisor (get-supervisor state)
+        state (filter-supervisors state supervisor)]
     (om/component
-     (dom/div #js {:className "pure-u"} (str "hello " (supervisor-id supervisor))))))
+      (dom/div nil
+        (dom/h1 #js {:className "pure-u"} (supervisor-display supervisor))
+          (om/build processes state {:init-state (om/get-state owner)})))))
