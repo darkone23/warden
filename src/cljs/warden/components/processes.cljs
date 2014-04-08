@@ -51,7 +51,8 @@
                       :onClick #(put! action-chan [::stop @p])})
           (dom/i #js {:className "stop fa fa-refresh"
                       :onClick #(put! action-chan [::restart @p])}))
-        (dom/a #js {:className "name pure-u" :href (process-detail-url p)} (process-title p))))
+        (dom/a #js {:className "name pure-u" :href (process-detail-url p)} (process-title p))
+        (dom/span #js {:className "pure-u"} (:description p))))
 
     om/IInitState
     (init-state [this]
