@@ -31,4 +31,4 @@
       supervisor_http: on
       command: java -jar {{ warden_jar }}
       app_env:
-        port: '{{ warden_port|default(3000) }}'
+        port: '{{ warden_port }}'
