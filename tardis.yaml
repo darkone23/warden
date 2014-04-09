@@ -4,4 +4,4 @@ name: warden
 files:
   - target/warden-0.0.1-SNAPSHOT-standalone.jar
   - scripts/deploy.yaml
-  - example.warden.yaml
+  - scripts/warden.yaml.j2

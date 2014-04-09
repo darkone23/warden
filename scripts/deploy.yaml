@@ -1,4 +1,7 @@
 # meant for use with https://github.com/eggsby/ansible-supervise
+# as is it is like this playbook won't work in most environments
+# it should however give you an idea of how to deploy the thing :)
+
 - hosts: warden
 
   sudo: '{{ sudo_user is defined }}'
@@ -6,14 +9,24 @@
 
   vars:
     app_home: '~/apps/warden'
-    build_jar: '{{ playbook_dir }}/../target/warden-{{ version }}-standalone.jar'
     warden_jar: '{{ app_home }}/warden.jar'
-    version: '0.0.1-SNAPSHOT'
+    warden_version: '0.0.1-SNAPSHOT'
+    port: 3000
 
   pre_tasks:
-    - copy: src={{ build_jar }} dest={{ warden_jar }}
+    - nexus: >
+        repo={{ maven.release_repo }}
+        group_id=eggsby
+        artifact_id=warden
+        version={{ version}}
+        filename=warden-{{ warden_version }}-standalone.jar
+        dest={{ warden_jar }}
+
+    - template: src=warden.yaml.j2 dest={{ app_home }}/warden.yaml
 
   roles:
     - role: supervise
       supervisor_http: on
       command: java -jar {{ warden_jar }}
+      app_env:
+        port: '{{ port }}'
