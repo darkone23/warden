@@ -1,17 +1,17 @@
 interval: {{ warden_interval|default(5000) }}
 
-{% if warden_user is defined and warden_pass is defined -%}
+{% if warden_user is defined and warden_pass is defined %}
 user: {{ warden_user }}
 pass: {{ warden_pass }}
-{%- endif %}
+{% endif %}
 
 hosts:
 {% for supervisor in supervisors %}
   - name: {{ supervisor.name }}
     host: {{ supervisor.host }}
     port: {{ supervisor.port }}
-    {% if supervisor.user is defined and supervisor.pass is defined -%}
+{% if supervisor.user is defined and supervisor.pass is defined %}
     user: {{ supervisor.user }}
     pass: {{ supervisor.pass }}
-    {%- endif %}
+{% endif %}
 {% endfor %}
