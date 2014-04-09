@@ -82,23 +82,18 @@
   :handle-created ::response)
 
 ;; Compojure Route Definitions
+
 (defroutes api-routes*
-  ;; list of all supervisors
   (ANY "/supervisors" []
     (supervisors-all))
-  ;; list of supervisors on a host
   (ANY "/supervisors/:host" [host]
     (supervisors-group host))
-  ;; a particular supervisor on a host
   (ANY "/supervisors/:host/:name" [host name]
     (supervisor host name))
-  ;; a process list of a supervisor on a host
   (ANY "/supervisors/:host/:name/processes" [host name]
     (supervisor-processes host name))
-  ;; detail about a particular process
   (ANY "/supervisors/:host/:name/processes/:process" [host name process]
     (supervisor-process host name process))
-  ;; action enacted on a particular process
   (ANY "/supervisors/:host/:name/processes/:process/action/:action" [host name process action]
     (supervisor-process-action host name process action)))
 
