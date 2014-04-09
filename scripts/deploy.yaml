@@ -11,7 +11,6 @@
     app_home: '~/apps/warden'
     warden_jar: '{{ app_home }}/warden.jar'
     warden_version: '0.0.1-SNAPSHOT'
-    port: 3000
 
   pre_tasks:
     - name: fetching warden from maven repository
@@ -32,4 +31,4 @@
       supervisor_http: on
       command: java -jar {{ warden_jar }}
       app_env:
-        port: '{{ port }}'
+        port: '{{ warden_port|default(3000) }}'
