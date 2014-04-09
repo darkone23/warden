@@ -5,14 +5,13 @@
   sudo_user: '{{ sudo_user|default(None) }}'
 
   vars:
-    app_home: '~/software/warden'
+    app_home: '~/apps/warden'
     build_jar: '{{ playbook_dir }}/../target/warden-{{ version }}-standalone.jar'
     warden_jar: '{{ app_home }}/warden.jar'
     version: '0.0.1-SNAPSHOT'
 
   pre_tasks:
-    - copy: src='{{ build_jar }}'
-            dest='{{ warden_jar }}'
+    - copy: src={{ build_jar }} dest={{ warden_jar }}
 
   roles:
     - role: supervise
