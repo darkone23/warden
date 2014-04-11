@@ -23,6 +23,7 @@
   :test-paths ["test/clj"]
 
   :main warden.core
+  :aot :all
 
   :plugins [[lein-cljsbuild "1.0.1"]
             [com.keminglabs/cljx "0.3.2"]]
