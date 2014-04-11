@@ -65,8 +65,14 @@
                {::response s}))
   :handle-ok ::response)
 
-(defresource supervisor-processes [host name])
-(defresource supervisor-process [host name process])
+(defresource supervisor-process [host name process]
+  :available-media-types media-types
+  :allowed-methods [:get]
+  :exists? (fn [ctx]
+             (if-let [s (some-key= {:host host :name name} (read-supervisors))]
+               (if-let [p (some-key= {:name process} (:processes s))]
+                 {::response p})))
+  :handle-ok ::response)
 
 (defresource supervisor-process-action [host name process action]
   :available-media-types media-types
@@ -81,6 +87,9 @@
              {::response {:result (action client process)}}))
   :handle-created ::response)
 
+(defn supervisor-process-log [host name process]
+  (println host name process))
+
 ;; Compojure Route Definitions
 
 (defroutes api-routes*
@@ -90,10 +99,10 @@
     (supervisors-group host))
   (ANY "/supervisors/:host/:name" [host name]
     (supervisor host name))
-  (ANY "/supervisors/:host/:name/processes" [host name]
-    (supervisor-processes host name))
   (ANY "/supervisors/:host/:name/processes/:process" [host name process]
     (supervisor-process host name process))
+  (ANY "/supervisors/:host/:name/processes/:process/log" [host name process]
+    (supervisor-process-log host name process))
   (ANY "/supervisors/:host/:name/processes/:process/action/:action" [host name process action]
     (supervisor-process-action host name process action)))
 
