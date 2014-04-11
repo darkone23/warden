@@ -11,6 +11,6 @@ lein with-profile release \
     cljx once, \
     cljsbuild clean release, \
     cljsbuild once release, \
-    ring uberjar
+    uberjar
 
 echo "All done!"

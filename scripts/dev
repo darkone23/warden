@@ -1,7 +1,7 @@
 #!/bin/sh
 if [ -n ${TMUX} ]; then
 	tmux rename-window 'warden-dev'
-	tmux send-keys 'lein with-profile dev ring server-headless' 'C-m'
+	tmux send-keys 'lein with-profile dev run' 'C-m'
 	tmux split-window -h
 	tmux send-keys 'lein midje :autotest' 'C-m'
 	tmux split-window -v

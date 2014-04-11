@@ -8,6 +8,7 @@
                  [tailrecursion/cljson "1.0.6"]
                  [clj-yaml "0.4.0"]
                  [com.cemerick/friend "0.2.0"]
+                 [http-kit "2.1.16"]
                  [liberator "0.10.0"]
                  [compojure "1.1.6"]
                  [rm-hull/ring-gzip-middleware "0.1.7"]
@@ -21,11 +22,10 @@
   :source-paths ["src/clj" "target/cljx-generated/clj"]
   :test-paths ["test/clj"]
 
-  :plugins [[lein-ring "0.8.10"]
-            [lein-cljsbuild "1.0.1"]
-            [com.keminglabs/cljx "0.3.2"]]
+  :main warden.core
 
-  :ring {:handler warden.handler/app}
+  :plugins [[lein-cljsbuild "1.0.1"]
+            [com.keminglabs/cljx "0.3.2"]]
 
   :cljx {:builds [{:source-paths ["src/cljx"]
                    :output-path "target/cljx-generated/clj"
