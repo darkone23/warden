@@ -87,8 +87,11 @@
              {::response {:result (action client process)}}))
   :handle-created ::response)
 
-(defn supervisor-process-log [host name process]
-  (println host name process))
+(defn supervisor-process-log-out [host name process]
+  (println :out host name process))
+
+(defn supervisor-process-log-err [host name process]
+  (println :err host name process))
 
 (defroutes api-routes*
   (ANY "/supervisors" []
@@ -99,8 +102,10 @@
     (supervisor host name))
   (ANY "/supervisors/:host/:name/processes/:process" [host name process]
     (supervisor-process host name process))
-  (ANY "/supervisors/:host/:name/processes/:process/log" [host name process]
-    (supervisor-process-log host name process))
+  (ANY "/supervisors/:host/:name/processes/:process/log/out" [host name process]
+    (supervisor-process-log-out host name process))
+  (ANY "/supervisors/:host/:name/processes/:process/log/err" [host name process]
+    (supervisor-process-log-err host name process))
   (ANY "/supervisors/:host/:name/processes/:process/action/:action" [host name process action]
     (supervisor-process-action host name process action)))
 

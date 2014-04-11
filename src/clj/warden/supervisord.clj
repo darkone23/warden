@@ -149,7 +149,7 @@
         ;; no lines for reading, start over
         (let [[msg ch] (alts! [control-chan (timeout wait)])]
           (if (= control-chan ch)
-            (map close! [log-chan control-chan])
+            (for [ch [log-chan control-chan]] (close! ch))
             (recur (read-fn client name offset chunk-size) offset)))
         ;; process lines, adjust offset, start over
         (let [new-offset (+ offset (count content))]
@@ -179,6 +179,8 @@
    :start-all   start-all
    :status-all  get-all-process-info
    :read-log    read-full-supervisord-log
+   :stdout-chan process-stdout-chan
+   :stderr-chan process-stderr-chan
    :read-stdout read-full-process-stdout
    :read-stderr read-full-process-stderr
    :tail-stdout tail-process-stdout
