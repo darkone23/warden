@@ -90,8 +90,6 @@
 (defn supervisor-process-log [host name process]
   (println host name process))
 
-;; Compojure Route Definitions
-
 (defroutes api-routes*
   (ANY "/supervisors" []
     (supervisors-all))
