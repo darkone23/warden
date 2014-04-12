@@ -6,6 +6,8 @@
             [liberator.core :refer (defresource resource)]
             [liberator.representation :refer (render-map-generic render-seq-generic)]
             [tailrecursion.cljson :refer (clj->cljson)]
+            [chord.http-kit :refer [with-channel]]
+            [clojure.core.async :refer [<! put! close! go-loop timeout alts! chan]]
             [cemerick.friend :as friend]
             [cemerick.friend [workflows :as workflows]
                              [credentials :as creds]]))
@@ -87,10 +89,27 @@
              {::response {:result (action client process)}}))
   :handle-created ::response)
 
-(defn supervisor-process-log-out [host name process]
-  (println :out host name process))
+(defn tick-chan []
+  (let [c (chan)]
+    (go-loop [n 0]
+      (put! c n)
+      (<! (timeout 1000))
+      (recur (inc n)))
+    c))
 
-(defn supervisor-process-log-err [host name process]
+(defn supervisor-process-log-out [{{:keys [host name process]} :params :as req}]
+  (let [my-ch (tick-chan)] 
+  (with-channel req ws-ch
+    (go-loop [[msg ch] (alts! [ws-ch my-ch])]
+      (if (= ch ws-ch)
+        (do
+          (close! my-ch)
+          (close! ws-ch))
+        (do
+          (put! ws-ch msg)
+          (recur (alts! [ws-ch my-ch]))))))))
+
+(defn supervisor-process-log-err [{{:keys [host name process]} :params :as req}]
   (println :err host name process))
 
 (defroutes api-routes*
@@ -102,10 +121,10 @@
     (supervisor host name))
   (ANY "/supervisors/:host/:name/processes/:process" [host name process]
     (supervisor-process host name process))
-  (ANY "/supervisors/:host/:name/processes/:process/log/out" [host name process]
-    (supervisor-process-log-out host name process))
-  (ANY "/supervisors/:host/:name/processes/:process/log/err" [host name process]
-    (supervisor-process-log-err host name process))
+  (GET "/supervisors/:host/:name/processes/:process/log/out" req
+    (supervisor-process-log-out req))
+  (GET "/supervisors/:host/:name/processes/:process/log/err" req
+    (supervisor-process-log-err req))
   (ANY "/supervisors/:host/:name/processes/:process/action/:action" [host name process action]
     (supervisor-process-action host name process action)))
 

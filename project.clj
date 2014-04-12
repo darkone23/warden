@@ -11,6 +11,7 @@
                  [http-kit "2.1.16"]
                  [liberator "0.10.0"]
                  [compojure "1.1.6"]
+                 [jarohen/chord "0.3.1"]
                  [rm-hull/ring-gzip-middleware "0.1.7"]
                  [prismatic/schema "0.2.0"]
                  [necessary-evil "2.0.0"]
