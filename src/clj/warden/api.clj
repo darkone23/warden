@@ -1,6 +1,7 @@
 (ns warden.api
   (:use compojure.core)
-  (:require [warden.config :refer (config)]
+  (:require [clojure.string :as str]
+            [warden.config :refer (config)]
             [warden.supervisord :as super]
             [warden.util :refer (supervisor-id filter-key= some-key=)]
             [liberator.core :refer (defresource resource)]
@@ -67,20 +68,26 @@
                {::response s}))
   :handle-ok ::response)
 
+(defn get-supervisor-process [host name process]
+  (if-let [s (some-key= {:host host :name name} (read-supervisors))]
+    (some-key= {:name process} (:processes s))))
+
 (defresource supervisor-process [host name process]
   :available-media-types media-types
   :allowed-methods [:get]
   :exists? (fn [ctx]
-             (if-let [s (some-key= {:host host :name name} (read-supervisors))]
-               (if-let [p (some-key= {:name process} (:processes s))]
-                 {::response p})))
+             (if-let [p (get-supervisor-process host name process)]
+               {::response p}))
   :handle-ok ::response)
+
+(defn get-supervisor-client [host name]
+  (:client (some-key= {:host host :name name} supervisor-clients)))
 
 (defresource supervisor-process-action [host name process action]
   :available-media-types media-types
   :allowed-methods [:post]
   :exists? (fn [ctx]
-             (let [c (:client (some-key= {:host host :name name} supervisor-clients))
+             (let [c (get-supervisor-client host name)
                    f (super/api (keyword action))]
                (if (and c f) {::client c ::action f})))
   :post-to-missing? false
@@ -89,28 +96,24 @@
              {::response {:result (action client process)}}))
   :handle-created ::response)
 
-(defn tick-chan []
-  (let [c (chan)]
-    (go-loop [n 0]
-      (put! c n)
-      (<! (timeout 1000))
-      (recur (inc n)))
-    c))
+(defn process-log-ws [log-chan-fn {{:keys [host name process]} :params :as req}]
+  (if (get-supervisor-process host name process)
+    (let [client (get-supervisor-client host name)
+          [log-ch control-ch] (log-chan-fn client process)]
+      (with-channel req ws-ch
+        (go-loop [[msg ch] (alts! [ws-ch log-ch])]
+          (if (= ch ws-ch)
+            (doseq [c [control-ch ws-ch]] (close! c))
+            (let [msg (str/replace msg #"\t" "    ")]
+              (doseq [line (str/split msg #"\n")] (put! ws-ch line))
+              (recur (alts! [ws-ch log-ch])))))))
+    {:status 404}))
 
-(defn supervisor-process-log-out [{{:keys [host name process]} :params :as req}]
-  (let [my-ch (tick-chan)] 
-  (with-channel req ws-ch
-    (go-loop [[msg ch] (alts! [ws-ch my-ch])]
-      (if (= ch ws-ch)
-        (do
-          (close! my-ch)
-          (close! ws-ch))
-        (do
-          (put! ws-ch msg)
-          (recur (alts! [ws-ch my-ch]))))))))
+(defn supervisor-process-log-out [req]
+  (process-log-ws (:stdout-chan super/api) req))
 
-(defn supervisor-process-log-err [{{:keys [host name process]} :params :as req}]
-  (println :err host name process))
+(defn supervisor-process-log-err [req]
+  (process-log-ws (:stderr-chan super/api) req))
 
 (defroutes api-routes*
   (ANY "/supervisors" []
