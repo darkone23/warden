@@ -27,6 +27,12 @@ header {
     user-select: none;
 }
 
+header.pure-menu h2 a {
+    padding: 0;
+    color: #1B1B1B;
+    line-height: 1;
+}
+
 body,
 .pure-g   [class *= "pure-u"],
 .pure-g-r [class *= "pure-u"] {
@@ -134,10 +140,10 @@ a:hover {
     display: block;
 }
 
-.process .name {
-    padding-right: 10px;
+.process .name, .process .supervisor-name {
+    margin: 0px 5px;
     font-size: 1.15em;
-    line-height: 1.5em;
+    line-height: 1.15em;
 }
 
 .process .description {
@@ -235,7 +241,6 @@ a:hover {
 .supervisor.error > i {
     margin-right: 10px;
 }
-
 
 .process-detail button {
     font-size: 75%;

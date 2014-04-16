@@ -13,7 +13,8 @@
 (defn header-menu [{:keys [route description] :as state} owner]
   (om/component
    (dom/header #js {:className "pure-menu pure-menu-fixed pure-menu-open pure-menu-horizontal"}
-     (dom/h2 #js {:className "pure-u"} (:name state))
+     (dom/h2 #js {:className "pure-u"}
+       (dom/a #js {:href "#/supervisors"} (:name state)))
      (dom/h3 #js {:className "description pure-u"} description)
      (dom/ul #js {:className (str "pure-u " (name route))}
        (dom/li #js {:key "nav-supervisors" :className "pure-u supervisors"}

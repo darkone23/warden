@@ -29,14 +29,14 @@
 (defn process-api [{:keys [supervisor name]}]
   (str (supervisor-api supervisor) "/processes/" name))
 
-(defn process-title [process]
-  (let [supervisor-host (get-in process [:supervisor :host])
-        supervisor-name (get-in process [:supervisor :name])
-        name (:name process)]
-    (str name " on " supervisor-name "@" supervisor-host)))
+(defn supervisor-title [{{:keys [host name]} :supervisor}]
+  (str host "@" name))
 
 (defn process-detail-url [{{:keys [host name]} :supervisor :as p}]
   (str "#/supervisors/" host "/" name "/" (:name p)))
+
+(defn supervisor-detail-url [{{:keys [host name]} :supervisor :as p}]
+  (str "#/supervisors/" host "/" name))
 
 (defn process [{:keys [statename] :as p} owner]
   "Single process in a supervisor"
@@ -52,7 +52,9 @@
                       :onClick #(put! action-chan [::stop @p])})
           (dom/i #js {:className "stop fa fa-refresh"
                       :onClick #(put! action-chan [::restart @p])}))
-        (dom/a #js {:className "name pure-u" :href (process-detail-url p)} (process-title p))
+        (dom/a #js {:className "name pure-u" :href (process-detail-url p)} (:name p))
+        (dom/span #js {:className "pure-u"} " on ")
+        (dom/a #js {:className "supervisor-name pure-u" :href (supervisor-detail-url p)} (supervisor-title p))
         (dom/span #js {:className "pure-u"} (:description p))))
 
     om/IInitState
@@ -131,14 +133,13 @@
     om/IWillMount
     (will-mount [this]
       (let [control-ch (om/get-state owner :control-chan)]
-        (go
-          (let [ws (<! (ws-ch api))]
-            (loop [[{:keys [message error]} ch] (alts! [ws control-ch])]
-              (if-not (= ch ws)
-                (close! ws)
-                (when message
-                  (om/update-state! owner :loglines #(conj % message))
-                  (recur (alts! [ws control-ch])))))))))))
+        (go (let [ws (<! (ws-ch api))]
+          (loop [[{:keys [message error]} ch] (alts! [ws control-ch])]
+            (if-not (= ch ws)
+              (close! ws)
+              (when message
+                (om/update-state! owner :loglines #(conj % message))
+                (recur (alts! [ws control-ch])))))))))))
 
 (defn log-err-stream [app-state owner]
   (log-stream (process-log-err-url app-state) app-state owner))
