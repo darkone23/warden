@@ -99,7 +99,33 @@
       {:error (str "Could not find process named '" pname "'")})
     {:error (str "Could not find supervisor named '" sname "' on host " host)}))
 
-(defn process-detail [state owner]
-  (let [p (get-process state)]
-    (om/component
-     (om/build process p {:init-state (om/get-state owner)}))))
+(defn log-out-stream [app-state owner]
+  (reify
+    om/IRender
+    (render [this]
+      (dom/div #js {:className "pure-u"} (str "O U T")))))
+
+(defn log-err-stream [app-state owner]
+  (reify
+    om/IRender
+    (render [this]
+      (dom/div #js {:className "pure-u"} (str "E R R")))))
+
+(defn process-detail [app-state owner]
+  (reify
+    om/IRenderState
+    (render-state [this {:keys [active] :as state}]
+      (let [p (get-process app-state)
+            swap-state! (fn [e] (om/update-state! owner :active (fn [active] (case active :out :err :err :out))))]
+        (if-not (:error p)
+          (dom/div nil
+            (dom/button #js {:onClick swap-state!} "LOGGLE TOGGLE")
+            (om/build process p {:init-state state})
+            (case active
+              :out (om/build log-out-stream p {:init-state state})
+              :err (om/build log-err-stream p {:init-state state})))
+          (dom/div nil))))
+      
+    om/IInitState
+    (init-state [this]
+      {:active :out})))
