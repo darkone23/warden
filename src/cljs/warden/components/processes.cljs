@@ -115,9 +115,9 @@
   (reify
     om/IRenderState
     (render-state [this {lines :loglines}]
-      (apply dom/code #js {:className "pure-u loglines"}
+      (apply dom/pre #js {:className "pure-u-1 loglines"}
         (for [line lines]
-          (dom/pre nil line))))
+          (dom/div nil line))))
 
     om/IInitState
     (init-state [this]
@@ -126,8 +126,7 @@
 
     om/IWillUnmount
     (will-unmount [this]
-      ;; close control channel
-      )
+      (close! (om/get-state owner :control-chan)))
 
     om/IWillMount
     (will-mount [this]
@@ -154,12 +153,19 @@
       (let [p (get-process app-state)
             swap-state! (fn [e] (om/update-state! owner :active (fn [active] (case active :out :err :err :out))))]
         (if-not (:error p)
-          (dom/div nil
-            (dom/button #js {:onClick swap-state!} "LOGGLE TOGGLE")
-            (om/build process p {:init-state state})
-            (case active
-              :out (om/build log-out-stream p {:init-state state})
-              :err (om/build log-err-stream p {:init-state state})))
+          (case active
+            :out
+            (dom/div #js {:className "pure-u-1 process-detail"}
+              (om/build process p {:init-state state})
+              (dom/button #js {:className "pure-button pure-button-active"} "stdout")
+              (dom/button #js {:className "pure-button" :onClick swap-state!} "stderr")
+              (om/build log-out-stream p {:init-state state}))
+            :err
+            (dom/div #js {:className "pure-u-1 process-detail"}
+              (om/build process p {:init-state state})
+              (dom/button #js {:className "pure-button" :onClick swap-state!} "stdout")
+              (dom/button #js {:className "pure-button pure-button-active"} "stderr")
+              (om/build log-err-stream p {:init-state state})))
           (dom/div nil))))
 
     om/IInitState

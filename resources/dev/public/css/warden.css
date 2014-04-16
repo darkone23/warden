@@ -13,10 +13,10 @@ html {
 
 .main > *:nth-child(2) {
     padding: 80px 25px 0px;
-    height: 100%;
+    height: auto;
 }
 
-* {
+header {
     /* simplify box model */
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
@@ -234,4 +234,16 @@ a:hover {
 
 .supervisor.error > i {
     margin-right: 10px;
+}
+
+
+.process-detail button {
+    font-size: 75%;
+}
+
+.main pre.loglines {
+    max-height: 800px;
+    font-family: monospace;
+    background-color: #f8f8f8;
+    overflow-y: scroll;
 }
