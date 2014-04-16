@@ -4,7 +4,8 @@
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [tailrecursion.cljson :refer [cljson->clj]]
-            [cljs.core.async :refer (chan put!)])
+            [chord.client :refer [ws-ch]]
+            [cljs.core.async :refer (<! close! chan put! alts!)])
   (:require-macros [cljs.core.async.macros :refer (go go-loop)]))
 
 (defn handle-error! [ch response]
@@ -99,17 +100,52 @@
       {:error (str "Could not find process named '" pname "'")})
     {:error (str "Could not find supervisor named '" sname "' on host " host)}))
 
-(defn log-out-stream [app-state owner]
+(defn process-log-url [process]
+  (let [api-url (process-api process)
+        host js/window.location.host]
+    (str "ws://" host api-url "/log")))
+
+(defn process-log-out-url [process]
+  (str (process-log-url process) "/out"))
+
+(defn process-log-err-url [process]
+  (str (process-log-url process) "/err"))
+
+(defn log-stream [api app-state owner]
   (reify
-    om/IRender
-    (render [this]
-      (dom/div #js {:className "pure-u"} (str "O U T")))))
+    om/IRenderState
+    (render-state [this {lines :loglines}]
+      (apply dom/code #js {:className "pure-u loglines"}
+        (for [line lines]
+          (dom/pre nil line))))
+
+    om/IInitState
+    (init-state [this]
+      {:control-chan (chan)
+       :loglines []})
+
+    om/IWillUnmount
+    (will-unmount [this]
+      ;; close control channel
+      )
+
+    om/IWillMount
+    (will-mount [this]
+      (let [control-ch (om/get-state owner :control-chan)]
+        (go
+          (let [ws (<! (ws-ch api))]
+            (loop [[{:keys [message error]} ch] (alts! [ws control-ch])]
+              (if-not (= ch ws)
+                (close! ws)
+                (when message
+                  (om/update-state! owner :loglines #(conj % message))
+                  (recur (alts! [ws control-ch])))))))))))
 
 (defn log-err-stream [app-state owner]
-  (reify
-    om/IRender
-    (render [this]
-      (dom/div #js {:className "pure-u"} (str "E R R")))))
+  (log-stream (process-log-err-url app-state) app-state owner))
+
+(defn log-out-stream [app-state owner]
+  (log-stream (process-log-out-url app-state) app-state owner))
 
 (defn process-detail [app-state owner]
   (reify
@@ -125,7 +161,7 @@
               :out (om/build log-out-stream p {:init-state state})
               :err (om/build log-err-stream p {:init-state state})))
           (dom/div nil))))
-      
+
     om/IInitState
     (init-state [this]
       {:active :out})))
