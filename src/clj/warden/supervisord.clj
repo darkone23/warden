@@ -200,7 +200,8 @@
   "Start a background process for refreshing
    supervisor information on an interval
    Returns an atom of supervisors"
-  (let [supers (atom {:supervisors supervisors})]
+  (let [slist (apply vector (range (count supervisors)))
+        supers (atom {:supervisors slist})]
     (doall
      (map-indexed
       (fn [idx supervisor]
